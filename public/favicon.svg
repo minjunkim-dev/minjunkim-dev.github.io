@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Minjun Kim</title>
+  <rect width="64" height="64" rx="14" fill="#171717"/>
+  <path d="M16 43V21h5.2l10.9 13.8L42.8 21H48v22h-6V30.7L32.1 43 22 30.7V43z" fill="#fff"/>
+</svg>

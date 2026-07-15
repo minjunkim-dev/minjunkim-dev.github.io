@@ -1,0 +1,44 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  publishedAt: Date;
+  tags: string[];
+  href: string;
+  featured?: boolean;
+  headingLevel?: 'h2' | 'h3';
+}
+
+const {
+  title,
+  description,
+  publishedAt,
+  tags,
+  href,
+  featured = false,
+  headingLevel = 'h2',
+} = Astro.props;
+const Heading = headingLevel;
+const displayDate = new Intl.DateTimeFormat('ko-KR', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).format(publishedAt);
+---
+
+<article class="post-row">
+  <div class="post-meta">
+    <time class="post-date" datetime={publishedAt.toISOString()}>{displayDate}</time>
+    {featured && <span class="featured-label">Featured</span>}
+  </div>
+  <div class="post-body">
+    <Heading>
+      <a class="post-row-title" href={href}>{title}</a>
+    </Heading>
+    <p class="post-description">{description}</p>
+    <ul class="tag-list" aria-label="글 태그">
+      {tags.map((tag) => <li class="tag">{tag}</li>)}
+    </ul>
+  </div>
+  <span class="post-arrow" aria-hidden="true">↗</span>
+</article>

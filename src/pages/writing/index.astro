@@ -1,0 +1,43 @@
+---
+import { getCollection } from 'astro:content';
+import PostRow from '../../components/PostRow.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const posts = (await getCollection('writing', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+---
+
+<BaseLayout
+  title="Writing"
+  description="iOS 생명주기, 메모리 안정성, React Native 운영 정책을 실패 경로 중심으로 정리한 김민준의 기술 글입니다."
+>
+  <main id="main-content">
+    <header class="page-heading shell">
+      <p class="eyebrow">Writing / Mobile engineering notes</p>
+      <h1>실패 경로에서<br />시작하는 기술 기록.</h1>
+      <p class="page-heading-copy">
+        구현 방법만 나열하지 않습니다. 문제가 생긴 조건, 상태를 나눈 기준, 실패를 격리한
+        방식, 그리고 같은 문제가 돌아오지 않게 만드는 테스트 전략을 함께 기록합니다.
+      </p>
+      <p class="page-heading-meta">총 {posts.length}편 · 한국어</p>
+    </header>
+
+    <section class="page-section" aria-labelledby="all-writing-title">
+      <div class="shell">
+        <h2 id="all-writing-title" class="mono-label" style="margin-bottom: 32px;">All writing</h2>
+        <div class="post-list">
+          {posts.map((post) => (
+            <PostRow
+              title={post.data.title}
+              description={post.data.description}
+              publishedAt={post.data.publishedAt}
+              tags={post.data.tags}
+              href={`/writing/${post.id}/`}
+              featured={post.data.featured}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

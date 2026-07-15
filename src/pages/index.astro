@@ -1,0 +1,97 @@
+---
+import { getCollection } from 'astro:content';
+import PostRow from '../components/PostRow.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const posts = (await getCollection('writing', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+const featuredPosts = posts.filter((post) => post.data.featured).slice(0, 3);
+const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3);
+---
+
+<BaseLayout>
+  <main id="main-content">
+    <section class="hero shell" aria-labelledby="hero-title">
+      <div>
+        <p class="eyebrow"><span class="signal" aria-hidden="true"></span> Mobile systems, built for failure</p>
+        <h1 id="hero-title">
+          모바일의 경계에서<br />
+          <span class="muted-heading">실패를 설계합니다.</span>
+        </h1>
+        <p class="hero-copy">
+          Swift와 iOS를 중심으로, React Native 양 플랫폼의 출시와 운영까지 연결합니다.
+          눈에 보이는 화면보다 시작 순서, 메모리 압력, 업데이트 실패처럼 제품의 경계에서
+          생기는 문제를 오래 다룹니다.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/writing/">기술 글 읽기 <span aria-hidden="true">↗</span></a>
+          <a class="button button-secondary" href="/about/">경험 살펴보기</a>
+        </div>
+      </div>
+
+      <aside class="principle-card" aria-label="엔지니어링 원칙">
+        <div class="principle-card-header">
+          <p class="mono-label">engineering.posture</p>
+          <span class="window-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+        </div>
+        <ol class="principle-list">
+          <li>startup must be idempotent</li>
+          <li>decode for the destination</li>
+          <li>remote failure should not brick local</li>
+          <li>state before side effects</li>
+        </ol>
+      </aside>
+    </section>
+
+    <section class="home-section" aria-labelledby="featured-writing">
+      <div class="shell">
+        <div class="section-heading">
+          <div>
+            <p class="mono-label">01 / Selected writing</p>
+            <h2 id="featured-writing">운영 중에 드러나는<br />모바일의 실패 경로</h2>
+          </div>
+          <p>
+            재현하기 어려운 시작 경쟁, 이미지 디코딩의 메모리 비용, 원격 정책 장애처럼
+            정상 경로 밖에서 제품의 신뢰도를 결정하는 문제를 정리합니다.
+          </p>
+        </div>
+        <div class="post-list">
+          {visiblePosts.map((post) => (
+            <PostRow
+              title={post.data.title}
+              description={post.data.description}
+              publishedAt={post.data.publishedAt}
+              tags={post.data.tags}
+              href={`/writing/${post.id}/`}
+              featured={post.data.featured}
+            />
+          ))}
+        </div>
+        <div style="margin-top: 32px;">
+          <a class="section-link" href="/writing/">모든 글 보기 <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-section" aria-labelledby="work-title">
+      <div class="shell split-copy">
+        <div>
+          <p class="mono-label">02 / Work</p>
+          <h2 id="work-title">구현에서 출시,<br />출시에서 운영까지</h2>
+        </div>
+        <div class="split-copy-body">
+          <p>
+            모바일 개발은 기능을 끝내는 일보다 불확실성을 줄이는 일에 가깝다고 생각합니다.
+            생명주기와 동시성을 명시하고, 자원 사용량에 상한을 두며, 네트워크 실패가 사용자
+            경로 전체를 막지 않도록 상태를 설계합니다.
+          </p>
+          <p>
+            현재 Personal AI(구 SNPLAB)에서 선임연구원으로 일하며 Swift/iOS와 React Native
+            제품의 구현, 양 플랫폼 출시, 운영 경험을 쌓고 있습니다.
+          </p>
+          <a class="section-link" href="/about/">경력과 작업 방식 보기 <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

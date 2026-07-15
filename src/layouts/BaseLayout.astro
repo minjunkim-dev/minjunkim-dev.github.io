@@ -1,0 +1,103 @@
+---
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import { SITE } from '../data/site';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  type?: 'website' | 'article';
+  publishedAt?: Date;
+  updatedAt?: Date;
+  tags?: string[];
+  noindex?: boolean;
+}
+
+const {
+  title = SITE.title,
+  description = SITE.description,
+  type = 'website',
+  publishedAt,
+  updatedAt,
+  tags = [],
+  noindex = false,
+} = Astro.props;
+
+const documentTitle = title === SITE.title ? title : `${title} — Minjun Kim`;
+const canonicalURL = new URL(Astro.url.pathname, SITE.url);
+const socialImage = new URL('/og-default.png', SITE.url);
+const structuredData = type === 'article'
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: title,
+      description,
+      datePublished: publishedAt?.toISOString(),
+      dateModified: (updatedAt ?? publishedAt)?.toISOString(),
+      inLanguage: 'ko-KR',
+      mainEntityOfPage: canonicalURL.toString(),
+      author: {
+        '@type': 'Person',
+        name: '김민준',
+        url: SITE.url,
+      },
+      keywords: tags.join(', '),
+    }
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: SITE.title,
+      description: SITE.description,
+      url: SITE.url,
+      inLanguage: 'ko-KR',
+      author: {
+        '@type': 'Person',
+        name: '김민준',
+      },
+    };
+---
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#ffffff" />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <link rel="canonical" href={canonicalURL} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title={`${SITE.title} RSS`} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <meta property="og:type" content={type} />
+    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:site_name" content={SITE.title} />
+    <meta property="og:title" content={documentTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={socialImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Minjun Kim Mobile Engineer" />
+    {publishedAt && <meta property="article:published_time" content={publishedAt.toISOString()} />}
+    {updatedAt && <meta property="article:modified_time" content={updatedAt.toISOString()} />}
+    {tags.map((tag) => <meta property="article:tag" content={tag} />)}
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={documentTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
+
+    <title>{documentTitle}</title>
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+    <SiteHeader />
+    <slot />
+    <SiteFooter />
+  </body>
+</html>

@@ -1,0 +1,125 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../data/site';
+---
+
+<BaseLayout
+  title="About"
+  description="Swift/iOS와 React Native 제품의 구현, 출시, 운영을 연결하는 모바일 엔지니어 김민준의 경력과 작업 방식입니다."
+>
+  <main id="main-content">
+    <header class="page-heading shell">
+      <p class="eyebrow">About / Experience</p>
+      <h1>제품의 수명 전체를<br />생각하는 엔지니어.</h1>
+      <p class="page-heading-copy">
+        김민준입니다. Swift와 iOS를 주력으로 삼되, React Native로 iOS와 Android 제품을
+        함께 출시하고 운영해 왔습니다. 경계 조건을 코드와 테스트로 설명할 수 있는 팀을
+        지향합니다.
+      </p>
+    </header>
+
+    <section class="page-section" aria-labelledby="profile-title">
+      <div class="shell about-grid">
+        <div>
+          <p class="mono-label">01 / Profile</p>
+          <div class="about-copy">
+            <p id="profile-title">
+              화면 구현에서 시작해 앱 시작 생명주기, 비동기 초기화, 이미지 파이프라인,
+              원격 정책과 배포 후 운영까지 관심 영역을 넓혀 왔습니다.
+            </p>
+            <p>
+              문제를 고칠 때는 특정 장애의 임시 처방보다 상태와 소유권을 다시 정의합니다.
+              여러 진입점이 만나는 코드는 멱등하게 만들고, 큰 자원은 목적 크기에 맞게 다루며,
+              외부 시스템이 실패해도 로컬의 안전한 경로가 남도록 설계합니다.
+            </p>
+          </div>
+        </div>
+        <dl class="fact-list">
+          <div class="fact-row">
+            <dt>Focus</dt>
+            <dd>Swift · iOS · React Native</dd>
+          </div>
+          <div class="fact-row">
+            <dt>Role</dt>
+            <dd>Mobile Engineer</dd>
+          </div>
+          <div class="fact-row">
+            <dt>Location</dt>
+            <dd>대한민국</dd>
+          </div>
+          <div class="fact-row">
+            <dt>Contact</dt>
+            <dd><a href={`mailto:${SITE.email}`}>{SITE.email}</a></dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="page-section" aria-labelledby="experience-title">
+      <div class="shell">
+        <div class="section-heading">
+          <div>
+            <p class="mono-label">02 / Experience</p>
+            <h2 id="experience-title">모바일 제품을 만들고<br />운영한 경험</h2>
+          </div>
+          <p>
+            공개 가능한 역할과 기술 범위만 적었습니다. 회사 내부 구조, 비공개 URL,
+            검증되지 않은 성과 수치는 포함하지 않습니다.
+          </p>
+        </div>
+        <ol class="timeline">
+          <li class="timeline-item">
+            <div class="timeline-period">2022.06 — Present</div>
+            <div class="timeline-content">
+              <h3>Personal AI <span style="color: #8a8a8a; font-weight: 400;">(구 SNPLAB)</span></h3>
+              <p class="timeline-role">선임연구원 · Mobile Engineering</p>
+              <p class="timeline-description">
+                Swift/iOS 개발을 중심으로 React Native 기반 iOS·Android 제품의 구현,
+                출시, 운영을 연결합니다. 앱 생명주기와 상태 모델링, 자원 안정성,
+                장애 시 사용자 경로 보존을 주요 관심사로 다룹니다.
+              </p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="page-section" aria-labelledby="projects-title">
+      <div class="shell">
+        <div class="section-heading">
+          <div>
+            <p class="mono-label">03 / Public projects</p>
+            <h2 id="projects-title">공개 가능한<br />프로젝트 이름</h2>
+          </div>
+          <p>
+            모바일 제품 개발 경험의 맥락을 보여 주기 위해 외부에 공개 가능한 프로젝트명만
+            나열합니다.
+          </p>
+        </div>
+        <div class="project-names" role="list">
+          <article class="project-name" role="listitem"><span class="index">01</span><h3>MyD</h3></article>
+          <article class="project-name" role="listitem"><span class="index">02</span><h3>TBN</h3></article>
+          <article class="project-name" role="listitem"><span class="index">03</span><h3>장병e음</h3></article>
+        </div>
+        <p class="disclosure-note">
+          제품별 내부 아키텍처, 고객 정보, 비공개 기능과 성과 수치는 공개하지 않습니다.
+        </p>
+      </div>
+    </section>
+
+    <section class="page-section" aria-labelledby="principles-title">
+      <div class="shell split-copy">
+        <div>
+          <p class="mono-label">04 / Principles</p>
+          <h2 id="principles-title">작업을 판단하는<br />네 가지 기준</h2>
+        </div>
+        <div class="split-copy-body">
+          <p><strong>상태를 먼저 정의합니다.</strong> 조건문보다 상태 전이와 불가능한 조합을 먼저 봅니다.</p>
+          <p><strong>재시도를 견디게 만듭니다.</strong> 시작과 복구 경로는 여러 번 호출되어도 같은 결과에 수렴해야 합니다.</p>
+          <p><strong>자원 사용에 상한을 둡니다.</strong> 파일 크기가 아니라 디코딩, 캐시, 동시 작업이 만드는 실제 비용을 봅니다.</p>
+          <p><strong>실패를 제품 정책으로 다룹니다.</strong> 외부 의존성이 실패했을 때 막을지 통과시킬지 명시적으로 결정합니다.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

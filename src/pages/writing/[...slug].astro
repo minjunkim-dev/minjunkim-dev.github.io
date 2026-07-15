@@ -1,0 +1,78 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('writing', ({ data }) => !data.draft);
+
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+interface Props {
+  post: CollectionEntry<'writing'>;
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const published = new Intl.DateTimeFormat('ko-KR', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+}).format(post.data.publishedAt);
+const updated = post.data.updatedAt
+  ? new Intl.DateTimeFormat('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(post.data.updatedAt)
+  : undefined;
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.description}
+  type="article"
+  publishedAt={post.data.publishedAt}
+  updatedAt={post.data.updatedAt}
+  tags={post.data.tags}
+>
+  <main id="main-content" class="article-shell">
+    <nav class="breadcrumbs" aria-label="현재 위치">
+      <ol>
+        <li><a href="/">Home</a></li>
+        <li><a href="/writing/">Writing</a></li>
+        <li aria-current="page">Article</li>
+      </ol>
+    </nav>
+
+    <article>
+      <header class="article-header">
+        <p class="mono-label">Mobile engineering note</p>
+        <h1>{post.data.title}</h1>
+        <p class="article-dek">{post.data.description}</p>
+        <div class="article-meta">
+          <time datetime={post.data.publishedAt.toISOString()}>{published}</time>
+          {updated && post.data.updatedAt && (
+            <span>수정 <time datetime={post.data.updatedAt.toISOString()}>{updated}</time></span>
+          )}
+          <span>김민준</span>
+        </div>
+        <ul class="tag-list" aria-label="글 태그">
+          {post.data.tags.map((tag) => <li class="tag">{tag}</li>)}
+        </ul>
+      </header>
+
+      <div class="prose">
+        <Content />
+      </div>
+    </article>
+
+    <div class="article-footer">
+      <a class="section-link" href="/writing/"><span aria-hidden="true">←</span> 모든 글</a>
+      <a class="section-link" href="/about/">About <span aria-hidden="true">→</span></a>
+    </div>
+  </main>
+</BaseLayout>

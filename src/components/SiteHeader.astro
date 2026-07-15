@@ -1,0 +1,50 @@
+---
+const pathname = Astro.url.pathname;
+const navigation = [
+  { href: '/', label: 'Home' },
+  { href: '/writing/', label: 'Writing' },
+  { href: '/about/', label: 'About' },
+];
+
+const isActive = (href: string) =>
+  href === '/' ? pathname === '/' : pathname.startsWith(href);
+---
+
+<header class="site-header">
+  <div class="header-inner shell">
+    <a class="site-mark" href="/" aria-label="김민준 홈으로 이동">
+      <span class="mark-box" aria-hidden="true">MK</span>
+      <span class="site-mark-label">Minjun Kim</span>
+    </a>
+
+    <nav class="desktop-nav" aria-label="주요 메뉴">
+      <ul class="nav-list">
+        {navigation.map((item) => (
+          <li>
+            <a
+              class="nav-link"
+              href={item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <details class="mobile-nav">
+      <summary aria-label="메뉴 열기">Menu</summary>
+      <nav aria-label="모바일 메뉴">
+        {navigation.map((item) => (
+          <a
+            href={item.href}
+            aria-current={isActive(item.href) ? 'page' : undefined}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+    </details>
+  </div>
+</header>
