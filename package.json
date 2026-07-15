@@ -7,7 +7,8 @@
     "dev": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check && npm run test:articles",
+    "test:articles": "node scripts/verify-article-contracts.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "4.0.19",

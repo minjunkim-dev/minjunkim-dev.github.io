@@ -45,23 +45,24 @@ import ImageIO
 import UIKit
 
 struct ThumbnailDecoder {
+    enum ContentMode: String, Hashable, Sendable {
+        case aspectFit
+        case aspectFill
+    }
+
     enum DecodeError: Error {
         case invalidTargetSize
         case cannotCreateSource
+        case invalidSourceDimensions
         case cannotCreateThumbnail
     }
 
     static func decode(
         from url: URL,
         fitting pointSize: CGSize,
-        scale: CGFloat
+        scale: CGFloat,
+        contentMode: ContentMode
     ) throws -> UIImage {
-        guard pointSize.width > 0,
-              pointSize.height > 0,
-              scale > 0 else {
-            throw DecodeError.invalidTargetSize
-        }
-
         let sourceOptions: [CFString: Any] = [
             kCGImageSourceShouldCache: false
         ]
@@ -73,8 +74,13 @@ struct ThumbnailDecoder {
             throw DecodeError.cannotCreateSource
         }
 
-        let longestPoint = max(pointSize.width, pointSize.height)
-        let maxPixelSize = Int(ceil(longestPoint * scale))
+        let sourcePixelSize = try sourcePixelSize(of: source)
+        let maxPixelSize = try maxPixelSize(
+            sourcePixelSize: sourcePixelSize,
+            targetPointSize: pointSize,
+            scale: scale,
+            contentMode: contentMode
+        )
 
         let thumbnailOptions: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
@@ -93,6 +99,71 @@ struct ThumbnailDecoder {
 
         return UIImage(cgImage: cgImage, scale: scale, orientation: .up)
     }
+
+    static func maxPixelSize(
+        sourcePixelSize: CGSize,
+        targetPointSize: CGSize,
+        scale: CGFloat,
+        contentMode: ContentMode
+    ) throws -> Int {
+        guard targetPointSize.width > 0,
+              targetPointSize.height > 0,
+              scale > 0 else {
+            throw DecodeError.invalidTargetSize
+        }
+        guard sourcePixelSize.width > 0,
+              sourcePixelSize.height > 0 else {
+            throw DecodeError.invalidSourceDimensions
+        }
+
+        let targetPixelSize = CGSize(
+            width: targetPointSize.width * scale,
+            height: targetPointSize.height * scale
+        )
+        let widthRatio = targetPixelSize.width / sourcePixelSize.width
+        let heightRatio = targetPixelSize.height / sourcePixelSize.height
+        let resizeRatio: CGFloat
+
+        switch contentMode {
+        case .aspectFit:
+            resizeRatio = min(widthRatio, heightRatio)
+        case .aspectFill:
+            resizeRatio = max(widthRatio, heightRatio)
+        }
+
+        let downscaleRatio = min(resizeRatio, 1)
+        let longestSourceEdge = max(
+            sourcePixelSize.width,
+            sourcePixelSize.height
+        )
+        return max(1, Int(ceil(longestSourceEdge * downscaleRatio)))
+    }
+
+    private static func sourcePixelSize(
+        of source: CGImageSource
+    ) throws -> CGSize {
+        guard let properties = CGImageSourceCopyPropertiesAtIndex(
+            source,
+            0,
+            nil
+        ) as? [CFString: Any],
+        let width = (properties[kCGImagePropertyPixelWidth] as? NSNumber)?.doubleValue,
+        let height = (properties[kCGImagePropertyPixelHeight] as? NSNumber)?.doubleValue,
+        width > 0,
+        height > 0 else {
+            throw DecodeError.invalidSourceDimensions
+        }
+
+        let orientation = (
+            properties[kCGImagePropertyOrientation] as? NSNumber
+        )?.intValue ?? 1
+        let swapsAxes = [5, 6, 7, 8].contains(orientation)
+
+        return CGSize(
+            width: swapsAxes ? height : width,
+            height: swapsAxes ? width : height
+        )
+    }
 }
 ```
 
@@ -102,9 +173,9 @@ struct ThumbnailDecoder {
 - `kCGImageSourceCreateThumbnailFromImageAlways: true`: 내장 썸네일 유무와 관계없이 지정 크기의 결과를 만든다.
 - `kCGImageSourceCreateThumbnailWithTransform: true`: EXIF 방향 정보를 썸네일에 반영한다.
 - `kCGImageSourceShouldCacheImmediately: true`: 작은 결과는 함수 안에서 디코딩을 끝내, 이후 그리기 시점의 비용을 예측하기 쉽게 한다.
-- `kCGImageSourceThumbnailMaxPixelSize`: 긴 변의 최대 픽셀 수를 제한한다.
+- `kCGImageSourceThumbnailMaxPixelSize`: 원본 종횡비와 fit/fill 정책으로 계산한 긴 변의 최대 픽셀 수를 제한한다.
 
-원본의 종횡비는 ImageIO가 유지한다. 따라서 정사각형 셀에 넣더라도 여기서는 긴 변의 상한만 정하고, 실제 crop은 뷰 계층의 `contentMode`나 별도 후처리 정책으로 분리하는 편이 좋다.
+원본의 종횡비는 ImageIO가 유지한다. `aspectFit`은 두 축이 슬롯 안에 들어오는 작은 축소율을, `aspectFill`은 두 축 중 짧은 쪽도 슬롯을 덮는 큰 축소율을 선택한다. 실제 crop은 여전히 뷰 계층이나 별도 후처리가 담당하지만, fill 모드에서는 crop 뒤 확대가 필요하지 않을 만큼의 픽셀을 먼저 확보한다. EXIF 방향이 회전된 이미지는 너비와 높이를 바꿔 계산해야 transform 이후의 픽셀 예산과 맞는다.
 
 ## URL 기반 소스를 우선하기
 
@@ -180,12 +251,7 @@ struct ThumbnailCacheKey: Hashable, Sendable {
     let resourceID: String
     let pixelWidth: Int
     let pixelHeight: Int
-    let contentMode: ContentMode
-
-    enum ContentMode: String, Hashable, Sendable {
-        case fit
-        case fill
-    }
+    let contentMode: ThumbnailDecoder.ContentMode
 }
 ```
 
@@ -201,7 +267,8 @@ for request in requests {
         let image = try ThumbnailDecoder.decode(
             from: request.fileURL,
             fitting: request.targetSize,
-            scale: request.scale
+            scale: request.scale,
+            contentMode: request.contentMode
         )
         try persist(image, for: request.cacheKey)
     }
@@ -214,7 +281,7 @@ for request in requests {
 
 메모리 문제는 단위 테스트 하나로 끝나지 않는다. 빠르고 결정적인 **픽셀 계약 테스트**와, 실제 기기 조건에 가까운 **반복 스트레스 테스트**를 분리한다.
 
-### 1. 결과의 긴 변이 픽셀 상한을 넘지 않는지 확인
+### 1. fit 상한과 fill crop 예산을 각각 확인
 
 ```swift
 import XCTest
@@ -230,24 +297,37 @@ final class ThumbnailDecoderTests: XCTestCase {
         let image = try ThumbnailDecoder.decode(
             from: fixtureURL,
             fitting: pointSize,
-            scale: scale
+            scale: scale,
+            contentMode: .aspectFit
         )
         let cgImage = try XCTUnwrap(image.cgImage)
         let longestPixel = max(cgImage.width, cgImage.height)
 
         XCTAssertLessThanOrEqual(longestPixel, 320)
     }
+
+    func testAspectFillPreservesCropPixelBudget() throws {
+        let maxPixelSize = try ThumbnailDecoder.maxPixelSize(
+            sourcePixelSize: CGSize(width: 4_000, height: 1_000),
+            targetPointSize: CGSize(width: 100, height: 100),
+            scale: 2,
+            contentMode: .aspectFill
+        )
+
+        XCTAssertEqual(maxPixelSize, 800)
+    }
 }
 ```
 
-fixture는 저장소에 포함할 수 있는 공개 테스트 이미지를 사용하고, 라이선스와 생성 방법을 함께 기록한다. 방향 메타데이터가 있는 portrait fixture도 추가해 transform 적용 후 폭과 높이가 예상대로인지 확인한다.
+fixture는 저장소에 포함할 수 있는 공개 테스트 이미지를 사용하고, 라이선스와 생성 방법을 함께 기록한다. 4:1 원본을 정사각형 fill 슬롯에 넣는 순수 계산 테스트는 짧은 축이 crop 크기를 덮는지 확인한다. 방향 메타데이터가 있는 portrait fixture도 추가해 transform 적용 후 폭과 높이가 예상대로인지 확인한다.
 
 ### 2. 잘못된 입력과 경계 크기 확인
 
 - 손상된 파일은 `.cannotCreateSource` 또는 `.cannotCreateThumbnail`로 종료되는가?
 - 0 또는 음수 target은 `.invalidTargetSize`로 거부되는가?
+- 0 또는 음수 source 크기는 `.invalidSourceDimensions`로 거부되는가?
 - 매우 작은 target에서도 `maxPixelSize`가 유효한 값인가?
-- 같은 URL의 서로 다른 target이 다른 캐시 키를 사용하는가?
+- 같은 URL의 서로 다른 target 또는 content mode가 다른 캐시 키를 사용하는가?
 
 ### 3. 반복 스크롤의 메모리 추세 확인
 

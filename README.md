@@ -13,7 +13,7 @@ Swift/iOS와 React Native 제품의 출시·운영 경험을 실패 경로 중�
 
 ## 로컬 실행
 
-Node.js 20 이상과 npm을 사용합니다.
+배포 워크플로와 동일한 Node.js 24와 npm을 사용합니다.
 
 ```bash
 npm ci

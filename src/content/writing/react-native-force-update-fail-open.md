@@ -78,8 +78,43 @@ TypeScript 타입은 네트워크 응답을 보장하지 않는다. `response.js
 ```typescript
 const versionPattern = /^\d+\.\d+\.\d+$/;
 
-function isHttpsURL(value: unknown): value is string {
-  return typeof value === 'string' && value.startsWith('https://');
+const allowedStoreHosts: Record<Platform, ReadonlySet<string>> = {
+  ios: new Set(['apps.apple.com']),
+  android: new Set(['play.google.com']),
+};
+
+function isAllowedStoreURL(
+  value: unknown,
+  platform: Platform,
+): value is string {
+  if (typeof value !== 'string') return false;
+
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+
+  if (
+    url.protocol !== 'https:' ||
+    url.username !== '' ||
+    url.password !== '' ||
+    url.port !== '' ||
+    !allowedStoreHosts[platform].has(url.hostname.toLowerCase())
+  ) {
+    return false;
+  }
+
+  switch (platform) {
+    case 'ios':
+      return /\/id\d+\/?$/.test(url.pathname);
+    case 'android':
+      return (
+        url.pathname === '/store/apps/details' &&
+        Boolean(url.searchParams.get('id'))
+      );
+  }
 }
 
 function isVersionPolicy(value: unknown): value is VersionPolicy {
@@ -98,11 +133,13 @@ function isVersionPolicy(value: unknown): value is VersionPolicy {
       typeof minimum.android === 'string' &&
       versionPattern.test(minimum.ios) &&
       versionPattern.test(minimum.android) &&
-      isHttpsURL(store.ios) &&
-      isHttpsURL(store.android),
+      isAllowedStoreURL(store.ios, 'ios') &&
+      isAllowedStoreURL(store.android, 'android'),
   );
 }
 ```
+
+`https://` 접두사만 보는 검사는 URL 유효성을 보장하지 않는다. 파싱에 실패하는 문자열, 사용자명과 비밀번호가 들어간 URL, 공식 스토어처럼 보이는 다른 host를 모두 거부해야 한다. 강제 업데이트처럼 원격 값이 외부 앱 열기로 이어지는 경로에서는 플랫폼별 공식 host와 path 형식까지 허용 목록으로 제한하는 편이 안전하다.
 
 예제는 제품이 `major.minor.patch` 숫자 형식을 사용한다는 계약을 명시한다. prerelease, build metadata, 네 자리 버전 등 더 넓은 형식을 지원해야 한다면 검증된 semver 라이브러리나 제품 전용 비교기를 사용해야 한다. 모호한 버전을 억지로 비교해 차단하는 것보다 **정책을 유효하지 않은 것으로 분류하고 fail-open하는 편이 기본 경로를 보존한다.**
 
@@ -279,10 +316,33 @@ const policy: VersionPolicy = {
     android: '3.1.0',
   },
   storeURL: {
-    ios: 'https://example.com/ios',
-    android: 'https://example.com/android',
+    ios: 'https://apps.apple.com/app/id1234567890',
+    android: 'https://play.google.com/store/apps/details?id=com.example.app',
   },
 };
+
+describe('isAllowedStoreURL', () => {
+  it('accepts only the platform store destination shape', () => {
+    expect(
+      isAllowedStoreURL('https://apps.apple.com/kr/app/example/id1234567890', 'ios'),
+    ).toBe(true);
+    expect(
+      isAllowedStoreURL(
+        'https://play.google.com/store/apps/details?id=com.example.app',
+        'android',
+      ),
+    ).toBe(true);
+  });
+
+  it.each([
+    'https://',
+    'https://[bad',
+    'https://user:secret@apps.apple.com/app/id1234567890',
+    'https://apps.apple.com.evil.example/app/id1234567890',
+  ])('rejects an unsafe iOS store URL: %s', (value) => {
+    expect(isAllowedStoreURL(value, 'ios')).toBe(false);
+  });
+});
 
 describe('decideGate', () => {
   it('opens normally when the current version meets the policy', () => {
@@ -296,7 +356,7 @@ describe('decideGate', () => {
     expect(decideGate('2.3.9', 'ios', { ok: true, policy })).toEqual({
       kind: 'blocked',
       minimumVersion: '2.4.0',
-      storeURL: 'https://example.com/ios',
+      storeURL: 'https://apps.apple.com/app/id1234567890',
     });
   });
 
