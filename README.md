@@ -1,4 +1,4 @@
-# Minjun Kim — Mobile Engineer
+# MINJUN KIM — Mobile Engineer
 
 Swift/iOS와 React Native 제품의 출시·운영 경험을 실패 경로 중심으로 기록하는 한국어 기술 블로그입니다. Astro의 Content Collections를 사용해 정적 사이트로 빌드하며 GitHub Pages에 배포합니다.
 
