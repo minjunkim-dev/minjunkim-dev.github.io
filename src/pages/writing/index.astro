@@ -9,15 +9,15 @@ const posts = (await getCollection('writing', ({ data }) => !data.draft))
 
 <BaseLayout
   title="Writing"
-  description="iOS 생명주기, 메모리 안정성, React Native 운영 정책을 실패 경로 중심으로 정리한 김민준의 기술 글입니다."
+  description="앱 초기화, 이미지 다운샘플링, React Native 업데이트 처리를 예제와 테스트로 설명한 김민준의 기술 글입니다."
 >
   <main id="main-content">
     <header class="page-heading shell">
       <p class="eyebrow">Writing / Mobile engineering notes</p>
-      <h1>실패 경로에서<br />시작하는 기술 기록.</h1>
+      <h1>모바일 개발 중<br />겪은 문제와 해결 방법.</h1>
       <p class="page-heading-copy">
-        구현 방법만 나열하지 않습니다. 문제가 생긴 조건, 상태를 나눈 기준, 실패를 격리한
-        방식, 그리고 같은 문제가 돌아오지 않게 만드는 테스트 전략을 함께 기록합니다.
+        문제가 생기는 조건과 처리 방법, 다시 확인할 테스트를 정리했습니다.
+        코드는 설명을 위해 재구성한 예제이며, 회사의 실제 코드를 공개한 것은 아닙니다.
       </p>
       <p class="page-heading-meta">총 {posts.length}편 · 한국어</p>
     </header>

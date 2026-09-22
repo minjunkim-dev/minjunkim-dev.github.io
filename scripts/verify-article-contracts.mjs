@@ -67,6 +67,35 @@ for (const [value, platform, expected] of cases) {
   }
 }
 
+// Execute the article's loader with real Response JSON parsing and a local fetch stub.
+const loader = typeScriptBlocks.find((block) => block.includes('async function loadPolicy'));
+const loaderJS = ts.transpileModule(`${typeDefinitions}\n${storeURLGuard}\n${loader}`, {
+  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 },
+}).outputText;
+const policy = {
+  minimumVersion: { ios: '2.0.0', android: '2.0.0' },
+  storeURL: {
+    ios: 'https://apps.apple.com/app/id1234567890',
+    android: 'https://play.google.com/store/apps/details?id=com.example.app',
+  },
+};
+const loaderCases = [
+  [async () => new Response('{broken'), 'invalid-payload'],
+  [async () => new Response('{}'), 'invalid-payload'],
+  [async () => new Response('', { status: 503 }), 'http'],
+  [async () => { throw new TypeError('offline'); }, 'network'],
+  [async () => { throw new DOMException('cancelled', 'AbortError'); }, 'timeout'],
+  [async () => new Response(JSON.stringify(policy)), undefined],
+];
+for (const [fetchStub, expected] of loaderCases) {
+  const run = Function('fetch', `${loaderJS}\nreturn loadPolicy('https://example.invalid/policy', 1000);`);
+  const result = await run(fetchStub);
+  if (result.reason !== expected || result.ok !== (expected === undefined)) {
+    throw new Error(`Policy loader: expected ${expected ?? 'success'}, got ${JSON.stringify(result)}`);
+  }
+}
+console.log(`Policy loader runtime checks passed (${loaderCases.length} cases).`);
+
 const checks = [
   {
     name: 'store URL validation must parse the URL instead of trusting an HTTPS prefix',

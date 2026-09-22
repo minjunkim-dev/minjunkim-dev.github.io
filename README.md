@@ -1,12 +1,12 @@
 # MINJUN KIM — Mobile Engineer
 
-Swift/iOS와 React Native 제품의 출시·운영 경험을 실패 경로 중심으로 기록하는 한국어 기술 블로그입니다. Astro의 Content Collections를 사용해 정적 사이트로 빌드하며 GitHub Pages에 배포합니다.
+iOS 중심 모바일 엔지니어 김민준의 경력·프로젝트 소개와 한국어 기술 글을 담은 사이트입니다. Astro의 Content Collections를 사용해 정적 사이트로 빌드하며 GitHub Pages에 배포합니다.
 
 ## 구성
 
-- 홈: 엔지니어링 관점과 대표 글
+- 홈: 주력 기술과 개발 경험, 대표 글
 - Writing: 전체 글 목록과 동적 상세 페이지
-- About: 공개 가능한 경력, 프로젝트명, 작업 원칙
+- About: 경력, 주요 프로젝트별 기여, 추가 경험, 기술, 학력
 - SEO: canonical, Open Graph, Twitter Card, JSON-LD
 - 피드/검색: RSS, sitemap, robots.txt
 - 기타: 반응형 내비게이션, 키보드 포커스, skip link, 404
@@ -27,10 +27,13 @@ npm run dev
 ```bash
 npm run check
 npm run build
+python3 scripts/verify-site.py
 npm run preview
 ```
 
 `npm run build`는 `astro check`를 먼저 실행한 뒤 정적 파일을 `dist/`에 생성합니다.
+`python3 scripts/verify-site.py`는 생성된 페이지의 내부 링크와 공개 경력 표기를 검사합니다.
+Swift가 설치된 환경에서는 `python3 scripts/verify-swift-sizing.py`로 글에 실린 크기 계산 함수의 정상·비정상 입력을 실행 검증할 수 있습니다. UIKit 디코딩이나 기기 메모리 측정은 별도입니다.
 
 ## 글 작성
 

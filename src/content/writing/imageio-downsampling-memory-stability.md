@@ -1,7 +1,8 @@
 ---
-title: "초대형 이미지를 안전하게 여는 법: ImageIO 다운샘플링과 메모리 상한"
-description: "원본 UIImage 디코딩을 피하고 표시 목적 크기로 직접 다운샘플링해 iOS 이미지 파이프라인의 메모리 사용을 예측 가능하게 만드는 방법."
+title: "ImageIO로 큰 이미지 줄이기: 표시 크기와 동시 디코딩 수 관리"
+description: "화면 크기에 맞춰 이미지를 다운샘플링하는 Swift 예제. fit/fill 크기 계산, 캐시 키, 반복 스크롤의 메모리 확인 항목을 정리한다."
 publishedAt: 2026-07-09
+updatedAt: 2026-09-22
 tags:
   - Swift
   - iOS
@@ -13,13 +14,13 @@ featured: true
 
 고해상도 이미지를 다루는 화면이 가끔 종료된다면 먼저 파일 용량을 확인하게 된다. 그러나 압축된 JPEG나 HEIF 파일의 크기는 화면에 펼쳐진 비트맵의 메모리 비용을 설명하지 못한다. 디코딩된 이미지의 대략적인 비용은 **픽셀 너비 × 픽셀 높이 × 픽셀당 바이트**에 가깝다. 여기에 색 공간 변환, 중간 버퍼, 리사이즈 결과, 캐시가 겹칠 수 있다.
 
-화면에는 작은 썸네일만 필요한데 원본을 `UIImage`로 먼저 만들고 나중에 줄이면, 가장 비싼 원본 디코딩 비용을 이미 지불한 뒤다. 해결 방향은 간단하다. **목적지 크기를 먼저 정하고 ImageIO가 그 크기에 가까운 썸네일을 만들도록 한다.**
+작은 썸네일만 필요한 화면에서 원본을 디코딩한 뒤 줄이면 불필요한 메모리를 쓸 수 있다. 여기서는 표시할 크기를 먼저 정하고 ImageIO로 그 크기에 가까운 썸네일을 만든다.
 
-이 글에서는 특정 서비스의 이미지나 측정 수치를 사용하지 않는다. 공개 API만으로 구성할 수 있는 다운샘플링 함수와, 메모리 안정성을 회귀 테스트하는 기준을 정리한다.
+이 글은 공개 API로 재구성한 설명용 예제이며, 실서비스 코드나 성능 측정 결과는 아니다. 다운샘플링 함수와 메모리 사용량을 확인할 때 필요한 테스트 항목을 정리한다.
 
 ## 파일 크기와 디코딩 크기를 분리해서 생각하기
 
-다음 코드는 편리하지만 큰 입력에서 위험하다.
+다음 코드는 입력 파일 전체를 `Data`로 읽는다.
 
 ```swift
 let data = try Data(contentsOf: url)
@@ -34,7 +35,7 @@ ImageIO를 쓰면 다음 두 단계를 분리할 수 있다.
 1. 이미지 소스를 만들 때 원본 캐시를 끈다.
 2. 목적지 픽셀 크기를 지정해 썸네일만 디코딩한다.
 
-원본을 화면 크기로 줄인 뒤 캐시하는 것이 아니라, **처음부터 화면 크기에 맞는 비트맵만 만든다.**
+원본 크기의 비트맵을 만든 뒤 줄이는 대신, 썸네일 생성 단계에 필요한 픽셀 크기를 전달하는 방식이다.
 
 ## 목적지의 point를 pixel로 바꾸기
 
@@ -106,13 +107,13 @@ struct ThumbnailDecoder {
         scale: CGFloat,
         contentMode: ContentMode
     ) throws -> Int {
-        guard targetPointSize.width > 0,
-              targetPointSize.height > 0,
-              scale > 0 else {
+        guard targetPointSize.width.isFinite, targetPointSize.width > 0,
+              targetPointSize.height.isFinite, targetPointSize.height > 0,
+              scale.isFinite, scale > 0 else {
             throw DecodeError.invalidTargetSize
         }
-        guard sourcePixelSize.width > 0,
-              sourcePixelSize.height > 0 else {
+        guard sourcePixelSize.width.isFinite, sourcePixelSize.width > 0,
+              sourcePixelSize.height.isFinite, sourcePixelSize.height > 0 else {
             throw DecodeError.invalidSourceDimensions
         }
 
@@ -120,6 +121,9 @@ struct ThumbnailDecoder {
             width: targetPointSize.width * scale,
             height: targetPointSize.height * scale
         )
+        guard targetPixelSize.width.isFinite, targetPixelSize.height.isFinite else {
+            throw DecodeError.invalidTargetSize
+        }
         let widthRatio = targetPixelSize.width / sourcePixelSize.width
         let heightRatio = targetPixelSize.height / sourcePixelSize.height
         let resizeRatio: CGFloat
@@ -136,7 +140,11 @@ struct ThumbnailDecoder {
             sourcePixelSize.width,
             sourcePixelSize.height
         )
-        return max(1, Int(ceil(longestSourceEdge * downscaleRatio)))
+        let roundedEdge = ceil(longestSourceEdge * downscaleRatio)
+        guard let pixels = Int(exactly: roundedEdge) else {
+            throw DecodeError.invalidTargetSize
+        }
+        return max(1, pixels)
     }
 
     private static func sourcePixelSize(
@@ -175,7 +183,7 @@ struct ThumbnailDecoder {
 - `kCGImageSourceShouldCacheImmediately: true`: 작은 결과는 함수 안에서 디코딩을 끝내, 이후 그리기 시점의 비용을 예측하기 쉽게 한다.
 - `kCGImageSourceThumbnailMaxPixelSize`: 원본 종횡비와 fit/fill 정책으로 계산한 긴 변의 최대 픽셀 수를 제한한다.
 
-원본의 종횡비는 ImageIO가 유지한다. `aspectFit`은 두 축이 슬롯 안에 들어오는 작은 축소율을, `aspectFill`은 두 축 중 짧은 쪽도 슬롯을 덮는 큰 축소율을 선택한다. 실제 crop은 여전히 뷰 계층이나 별도 후처리가 담당하지만, fill 모드에서는 crop 뒤 확대가 필요하지 않을 만큼의 픽셀을 먼저 확보한다. EXIF 방향이 회전된 이미지는 너비와 높이를 바꿔 계산해야 transform 이후의 픽셀 예산과 맞는다.
+원본의 종횡비는 ImageIO가 유지한다. `aspectFit`은 이미지 전체가 표시 영역 안에 들어오는 축소율을, `aspectFill`은 표시 영역을 빈틈없이 덮는 축소율을 선택한다. 실제 자르기는 뷰나 별도 후처리에서 맡는다. 예제는 원본보다 크게 만들지 않으므로 원본이 표시 영역보다 작으면 화면에서 확대가 필요할 수 있다. EXIF 방향으로 가로·세로가 바뀌는 이미지도 회전 후 크기를 기준으로 계산한다.
 
 ## URL 기반 소스를 우선하기
 
@@ -198,13 +206,13 @@ static func makeSource(from data: Data) throws -> CGImageSource {
 }
 ```
 
-이렇게 만든 source는 URL 경로와 같은 private 썸네일 함수에 전달한다. URL/Data 오버로드가 `CGImageSource` 이후 단계를 공유하게 하면 픽셀 상한과 캐시 옵션이 경로별로 갈라지지 않는다.
+`Data` 입력도 지원하려면 위 디코더에서 소스 생성 이후의 썸네일 처리 부분을 별도 함수로 옮겨 공유할 수 있다. 그러면 URL과 `Data` 경로에 같은 크기 계산과 캐시 옵션을 적용할 수 있다.
 
-다운로드 계층이 파일로 스트리밍할 수 있다면 임시 파일 URL을 디코더에 넘기는 구조도 검토할 만하다. 핵심은 “Data는 나쁘다”가 아니라 **동시에 살아 있는 큰 객체의 수와 수명을 보이게 만드는 것**이다.
+다운로드 결과를 파일에 저장할 수 있다면 임시 파일 URL을 디코더에 넘기는 방법도 있다. 어느 방식을 쓰든 압축 데이터와 디코딩 결과를 동시에 얼마나 오래 보관하는지 확인해야 한다.
 
-## 리스트에서는 동시 작업 수도 메모리 상한이다
+## 리스트에서는 동시 디코딩 수도 제한하기
 
-한 장을 안전하게 줄여도 여러 셀이 동시에 원본을 처리하면 피크 메모리는 다시 커진다. 이미지 파이프라인에는 픽셀 상한과 함께 **동시 디코딩 수의 상한**이 필요하다.
+한 장의 크기를 줄여도 여러 셀이 동시에 이미지를 처리하면 순간 메모리 사용량이 커질 수 있다. 리스트에서는 이미지 크기뿐 아니라 동시에 디코딩하는 수도 제한할 필요가 있다.
 
 ```swift
 actor DecodeLimiter {
@@ -255,7 +263,7 @@ struct ThumbnailCacheKey: Hashable, Sendable {
 }
 ```
 
-크기를 지나치게 세분하면 캐시 적중률이 낮아진다. 디자인 시스템의 이미지 슬롯 크기를 몇 단계로 정규화하고 그 값을 키에 쓰면 품질과 재사용 사이의 균형을 잡기 쉽다. 캐시 비용도 파일 바이트가 아니라 디코딩된 픽셀 비용에 가까운 값으로 계산해야 한다.
+크기가 조금만 달라도 별도 항목으로 저장하면 캐시를 재사용하기 어렵다. 화면에서 쓰는 이미지 크기를 몇 단계로 묶고 그 값을 키에 사용할 수 있다. 캐시 비용은 압축 파일 크기보다 디코딩된 이미지의 메모리 사용량을 기준으로 계산하는 편이 낫다.
 
 ## 반복 처리에서는 임시 객체의 수명도 제한하기
 
@@ -277,11 +285,11 @@ for request in requests {
 
 `autoreleasepool`은 원본 디코딩을 안전하게 만드는 대체제가 아니다. 목적 크기 디코딩과 동시성 제한을 먼저 적용한 뒤, 반복 작업에서 임시 객체 수명을 좁히는 보조 수단으로 사용한다.
 
-## 테스트 전략: 픽셀 계약과 메모리 추세를 나눠 검증하기
+## 테스트: 결과 이미지 크기와 반복 처리의 메모리 확인하기
 
-메모리 문제는 단위 테스트 하나로 끝나지 않는다. 빠르고 결정적인 **픽셀 계약 테스트**와, 실제 기기 조건에 가까운 **반복 스트레스 테스트**를 분리한다.
+결과 이미지의 크기는 단위 테스트로 확인할 수 있지만, 스크롤 중 메모리 사용량은 따로 측정해야 한다. 두 항목을 나눠 확인한다.
 
-### 1. fit 상한과 fill crop 예산을 각각 확인
+### 1. fit 결과 크기와 fill에 필요한 픽셀 수 확인
 
 ```swift
 import XCTest
@@ -324,8 +332,9 @@ fixture는 저장소에 포함할 수 있는 공개 테스트 이미지를 사�
 ### 2. 잘못된 입력과 경계 크기 확인
 
 - 손상된 파일은 `.cannotCreateSource` 또는 `.cannotCreateThumbnail`로 종료되는가?
-- 0 또는 음수 target은 `.invalidTargetSize`로 거부되는가?
-- 0 또는 음수 source 크기는 `.invalidSourceDimensions`로 거부되는가?
+- NaN·무한대·0·음수 target이나 scale은 `.invalidTargetSize`로 거부되는가?
+- NaN·무한대·0·음수 source 크기는 `.invalidSourceDimensions`로 거부되는가?
+- 곱셈 결과가 무한대이거나 `Int` 범위를 넘으면 오류로 처리하는가?
 - 매우 작은 target에서도 `maxPixelSize`가 유효한 값인가?
 - 같은 URL의 서로 다른 target 또는 content mode가 다른 캐시 키를 사용하는가?
 
@@ -342,14 +351,14 @@ UI 테스트나 전용 디버그 화면에서 큰 fixture 집합을 반복해서
 
 ## 마무리
 
-초대형 이미지 문제의 핵심은 “더 빨리 리사이즈하기”가 아니다. **원본 비트맵을 만들 필요가 없는 경로에서 원본을 만들지 않는 것**이다.
+작은 이미지가 필요한 화면에서는 원본을 디코딩한 뒤 줄이기보다 필요한 크기로 다운샘플링하는 방법을 고려할 수 있다.
 
-안정적인 이미지 경로는 다음 계약을 갖는다.
+적용할 때 확인할 항목은 다음과 같다.
 
 1. 뷰의 point 크기와 scale로 목적 pixel 크기를 계산한다.
 2. ImageIO가 원본 대신 목적 크기의 썸네일을 직접 디코딩한다.
 3. 동시 디코딩 수와 캐시 비용에도 상한을 둔다.
 4. 캐시 키에 정규화된 목적 크기와 표시 정책을 포함한다.
-5. 픽셀 계약 테스트와 반복 메모리 테스트를 분리한다.
+5. 결과 이미지 크기 테스트와 반복 처리의 메모리 측정을 분리한다.
 
-이 원칙을 지키면 이미지 파일이 얼마나 잘 압축되어 있는지와 무관하게, 화면이 감당해야 할 디코딩 비용을 설계 시점에 제한할 수 있다.
+이 설정들은 이미지 크기와 동시 작업 수를 관리하는 데 도움이 되지만, 앱 전체의 메모리 상한을 보장하지는 않는다. 중간 버퍼와 캐시를 포함한 실제 사용량은 같은 입력과 기기 조건에서 측정해야 한다.

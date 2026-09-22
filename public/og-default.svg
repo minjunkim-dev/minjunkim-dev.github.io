@@ -6,9 +6,9 @@
   <rect x="80" y="80" width="56" height="56" rx="10" fill="#171717"/>
   <text x="108" y="114" fill="#fff" text-anchor="middle" font-family="ui-monospace, monospace" font-size="17" font-weight="600">MK</text>
   <text x="160" y="115" fill="#171717" font-family="Arial, sans-serif" font-size="24" font-weight="600">Minjun Kim</text>
-  <text x="80" y="292" fill="#171717" font-family="Arial, sans-serif" font-size="72" font-weight="600" letter-spacing="-3">Mobile systems,</text>
-  <text x="80" y="374" fill="#858585" font-family="Arial, sans-serif" font-size="72" font-weight="600" letter-spacing="-3">built for failure.</text>
-  <text x="80" y="462" fill="#4d4d4d" font-family="Arial, sans-serif" font-size="26">Swift · iOS · React Native · Production reliability</text>
+  <text x="80" y="292" fill="#171717" font-family="Arial, sans-serif" font-size="72" font-weight="600" letter-spacing="-3">MINJUN KIM</text>
+  <text x="80" y="374" fill="#858585" font-family="Arial, sans-serif" font-size="72" font-weight="600" letter-spacing="-3">Mobile Engineer</text>
+  <text x="80" y="462" fill="#4d4d4d" font-family="Arial, sans-serif" font-size="26">Swift · SwiftUI · UIKit · React Native</text>
   <text x="80" y="536" fill="#777" font-family="ui-monospace, monospace" font-size="18">minjunkim-dev.github.io</text>
   <circle cx="1104" cy="100" r="6" fill="#171717"/>
 </svg>
