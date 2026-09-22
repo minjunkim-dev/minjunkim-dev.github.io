@@ -4,7 +4,7 @@ iOS 중심 모바일 엔지니어 김민준의 경력·프로젝트 소개와 �
 
 ## 구성
 
-- 홈: 주력 기술과 개발 경험, 대표 글
+- 홈: 소개 → 주요 프로젝트와 기여 → 경력·기술 → 기술 글
 - Writing: 전체 글 목록과 동적 상세 페이지
 - About: 경력, 주요 프로젝트별 기여, 추가 경험, 기술, 학력
 - SEO: canonical, Open Graph, Twitter Card, JSON-LD
@@ -13,7 +13,8 @@ iOS 중심 모바일 엔지니어 김민준의 경력·프로젝트 소개와 �
 
 ## 로컬 실행
 
-배포 워크플로와 동일한 Node.js 24와 npm을 사용합니다.
+배포 워크플로와 동일한 Node.js 24와 npm 11.19.0을 사용합니다.
+`.npmrc`로 의존성 설치 스크립트를 차단합니다. 현재 빌드에는 예외 허용이 필요하지 않습니다.
 
 ```bash
 npm ci
@@ -72,11 +73,12 @@ public/               # favicon, OG 이미지, robots.txt
 
 `.github/workflows/deploy-pages.yml`은 `main` 브랜치 push 또는 수동 실행 시 다음 순서로 동작합니다.
 
-1. `npm ci`
-2. `npm run check`
-3. `npm run build`
-4. `dist/`를 Pages artifact로 업로드
-5. GitHub Pages에 배포
+1. npm 11.19.0 선택 후 `npm ci --ignore-scripts --include=dev`
+2. `npm audit --include=dev --audit-level=moderate`
+3. `npm run check`
+4. `npm run build` 및 `python3 scripts/verify-site.py`
+5. `dist/`를 Pages artifact로 업로드
+6. GitHub Pages에 배포
 
 저장소의 **Settings → Pages → Build and deployment → Source**를 **GitHub Actions**로 설정해야 합니다.
 

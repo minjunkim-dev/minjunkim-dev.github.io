@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import PostRow from '../components/PostRow.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../data/site';
 
 const posts = (await getCollection('writing', ({ data }) => !data.draft))
   .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
@@ -14,46 +15,83 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
     <section class="hero shell" aria-labelledby="hero-title">
       <div>
         <p class="eyebrow"><span class="signal" aria-hidden="true"></span> iOS · React Native</p>
-        <h1 id="hero-title">
-          모바일 엔지니어<br />
-          <span class="muted-heading">김민준입니다.</span>
-        </h1>
+        <h1 id="hero-title">모바일 엔지니어<br /><span class="muted-heading">김민준입니다.</span></h1>
         <p class="hero-copy">
-          iOS를 중심으로 React Native 앱도 개발해 왔습니다.
-          MyD의 데이터·인증 연동, TBN의 방송·로그인 기능,
-          장병e음 앱 내 모바일 신분증 기능을 개발했습니다.
+          iOS를 중심으로 React Native 앱도 개발합니다.
+          데이터·본인인증 연동, 방송·로그인, 모바일 신분증 기능을 구현하고
+          테스트·스토어 심사·배포와 출시 후 오류 수정에 참여했습니다.
         </p>
         <div class="hero-actions">
-          <a class="button button-primary" href="/about/">경력·프로젝트 보기 <span aria-hidden="true">↗</span></a>
-          <a class="button button-secondary" href="/writing/">기술 글 읽기</a>
+          <a class="button button-primary" href="#projects-title">주요 프로젝트 보기 <span aria-hidden="true">↓</span></a>
+          <a class="button button-secondary" href={`mailto:${SITE.email}`}>이메일로 연락하기</a>
         </div>
       </div>
-
-      <aside class="principle-card" aria-label="주요 개발 경험">
-        <div class="principle-card-header">
-          <p class="mono-label">주요 개발 경험</p>
-          <span class="window-dots" aria-hidden="true"><span></span><span></span><span></span></span>
-        </div>
-        <ol class="principle-list">
-          <li>Swift · SwiftUI · UIKit</li>
-          <li>React Native · TypeScript</li>
-          <li>본인인증 · 소셜 로그인 · 모바일 신분증</li>
-          <li>테스트 · 스토어 심사 · 배포</li>
-        </ol>
+      <aside aria-label="경력 요약">
+        <dl class="fact-list">
+          <div class="fact-row"><dt>현재</dt><dd>Personal AI(구 SNPLAB)<br />앱팀 · 선임연구원</dd></div>
+          <div class="fact-row"><dt>경력</dt><dd>2022.06 — 현재</dd></div>
+          <div class="fact-row"><dt>주력</dt><dd>Swift · SwiftUI · UIKit<br />React Native · TypeScript</dd></div>
+        </dl>
       </aside>
+    </section>
+
+    <section class="home-section" aria-labelledby="projects-title">
+      <div class="shell">
+        <div class="section-heading">
+          <div><p class="mono-label">01 / Projects</p><h2 id="projects-title">주요 프로젝트</h2></div>
+          <p>앱 전체의 성과보다 직접 개발한 기능과 문제 해결 과정을 중심으로 소개합니다.</p>
+        </div>
+        <ol class="timeline">
+          <li class="timeline-item">
+            <div class="timeline-period">2022.06 — 현재</div>
+            <div class="timeline-content">
+              <h3>MyD · 개인 데이터 지갑</h3>
+              <p class="timeline-role">iOS · 데이터 거래·인증 연동</p>
+              <p class="timeline-description">데이터 거래 화면과 API를 연동하고 오류·재시도·딥링크 처리를 보완했습니다. KMC 본인인증과 쇼핑·건강 데이터 연동을 유지보수하며, ImageIO 다운샘플링과 앱 초기화 오류 수정도 맡았습니다.</p>
+              <p><a class="section-link" href="/about/#myd">MyD 담당 업무 보기 <span aria-hidden="true">→</span></a></p>
+            </div>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-period">2025.09 — 현재</div>
+            <div class="timeline-content">
+              <h3>TBN교통방송 · React Native 앱</h3>
+              <p class="timeline-role">iOS·Android · 방송·로그인·업데이트</p>
+              <p class="timeline-description">방송·오디오·지역·푸시와 KMC·Kakao·Apple 인증 기능을 개발했습니다. 앱 시작과 백그라운드 복귀 시 실행 순서를 정리하고, 2026년 5월 정식 출시와 후속 오류 수정에 참여했습니다.</p>
+              <p><a class="section-link" href="/about/#tbn">TBN 담당 업무 보기 <span aria-hidden="true">→</span></a></p>
+            </div>
+          </li>
+          <li class="timeline-item">
+            <div class="timeline-period">2025.01 — 2025.09</div>
+            <div class="timeline-content">
+              <h3>장병e음 앱 내 모바일 신분증</h3>
+              <p class="timeline-role">iOS 모듈 통합 · Android 기능 보완</p>
+              <p class="timeline-description">DID·VC 발급·서명과 온라인·오프라인 검증, 앱 잠금·생체인증을 연동했습니다. 담당 범위는 장병e음 전체 앱이 아닌 모바일 신분증 솔루션이며, 일부 기능은 다른 개발자와 공동 구현했습니다.</p>
+              <p><a class="section-link" href="/about/#mobile-id">모바일 신분증 담당 업무 보기 <span aria-hidden="true">→</span></a></p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="home-section" aria-labelledby="experience-title">
+      <div class="shell split-copy">
+        <div>
+          <p class="mono-label">02 / Experience</p>
+          <h2 id="experience-title">개발을 뒷받침하는<br />테스트와 배포 경험</h2>
+        </div>
+        <div class="split-copy-body">
+          <p>XCTest·Jest로 데이터 처리와 앱 동작을 검증하고, Jenkins·Fastlane·Firebase App Distribution을 이용해 중단된 iOS 배포 파이프라인을 재구축했습니다.</p>
+          <p>MyTalk에서는 Flutter 앱의 iOS App Check 연동과 Apple 연결 해제·탈퇴 처리를 보완했습니다. Kotlin/Android 기능 보완과 KMP 네이티브 연동 경험도 있습니다.</p>
+          <a class="section-link" href="/about/">전체 경력·기술·학력 보기 <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
     </section>
 
     <section class="home-section" aria-labelledby="featured-writing">
       <div class="shell">
         <div class="section-heading">
-          <div>
-            <p class="mono-label">01 / Selected writing</p>
-            <h2 id="featured-writing">개발 중 겪은 문제와<br />해결 방법</h2>
-          </div>
-          <p>
-            앱 초기화 중복, 큰 이미지의 메모리 사용, 업데이트 정책 조회 실패를 다룹니다.
-            설명을 위한 예제 코드와 테스트 방법을 함께 정리했습니다.
-          </p>
+          <div><p class="mono-label">03 / Writing</p><h2 id="featured-writing">기술 글</h2></div>
+          <p>앱 초기화, 이미지 메모리 사용, 업데이트 정책을 다룹니다. 회사 코드가 아닌 설명용 예제와 테스트 방법을 정리했습니다.</p>
         </div>
         <div class="post-list">
           {visiblePosts.map((post) => (
@@ -67,29 +105,7 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
             />
           ))}
         </div>
-        <div style="margin-top: 32px;">
-          <a class="section-link" href="/writing/">모든 글 보기 <span aria-hidden="true">→</span></a>
-        </div>
-      </div>
-    </section>
-
-    <section class="home-section" aria-labelledby="work-title">
-      <div class="shell split-copy">
-        <div>
-          <p class="mono-label">02 / Work</p>
-          <h2 id="work-title">기능 개발부터<br />출시 후 오류 수정까지</h2>
-        </div>
-        <div class="split-copy-body">
-          <p>
-            데이터·본인인증 연동과 방송 기능을 구현하고, 테스트·스토어 심사·배포에 참여했습니다.
-            출시 후에는 앱 초기화, 지역 정보, 백그라운드 청취 동작의 오류를 수정했습니다.
-          </p>
-          <p>
-            2022년 6월부터 Personal AI(구 SNPLAB) 앱팀에서 일하고 있습니다.
-            iOS 배포 파이프라인 재구축과 운영 인수인계도 맡았습니다.
-          </p>
-          <a class="section-link" href="/about/">담당 프로젝트 자세히 보기 <span aria-hidden="true">→</span></a>
-        </div>
+        <p><a class="section-link" href="/writing/">모든 기술 글 보기 <span aria-hidden="true">→</span></a></p>
       </div>
     </section>
   </main>

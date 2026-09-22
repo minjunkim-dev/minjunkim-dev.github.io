@@ -53,6 +53,10 @@ for path, page in pages.items():
             assert unquote(url.fragment) in pages[target].ids, (path, href)
         checked_links += 1
 
+home = (DIST / "index.html").read_text()
+assert home.index('id="projects-title"') < home.index('id="experience-title"') < home.index('id="featured-writing"')
+for anchor in ("myd", "tbn", "mobile-id"):
+    assert f'/about/#{anchor}' in home, anchor
 about = (DIST / "about/index.html").read_text()
 for required in ["MyD", "TBN교통방송", "장병e음 전체 앱이 아닌", "설계안을 제안", "공동 구현", "MyTalk", "배포 자동화", "학부 수석 졸업", "4.42 / 4.5", "2018.03", "2022.06.02"]:
     assert required in about, required
