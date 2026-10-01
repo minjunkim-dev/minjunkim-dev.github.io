@@ -52,14 +52,14 @@ import { SITE } from '../data/site';
             <div class="timeline-period">2022.06 — 현재</div>
             <div class="timeline-content">
               <h3 id="myd">MyD · 개인 데이터 지갑</h3>
-              <p class="timeline-role">iOS 기능 개발 · 데이터·인증 연동 · 심사·배포 · 운영</p>
+              <p class="timeline-role">iOS 기능 개발 · 데이터·인증 연동 · 심사·배포 · 운영 · iOS 월간 활성 사용자 약 4,600명</p>
               <ul class="timeline-description">
                 <li>데이터 거래 개편의 6개 핵심 화면과 서버 API 연동을 구현하고, 오류·재시도·딥링크·모달 동작을 보완한 뒤 QA와 배포까지 진행했습니다.</li>
                 <li>KMC 본인인증 WebView 흐름을 구현하고 쇼핑·건강검진·진료기록·금융 데이터의 연결·조회 기능을 개발했습니다. 외부 스크래핑 솔루션의 제약을 정리하고 iOS·Android 오류 처리를 통합했습니다.</li>
                 <li>AppsFlyer·GA·ATT·딥링크를 연동하고 신규 설치·재설치 조건을 테스트했습니다. Dev·Stag에서 FCM이 동작하지 않던 원인을 빌드의 Firebase 환경 설정 참조 문제로 규명해 수정했습니다.</li>
                 <li>Flutter 도입 후 중단된 iOS CI/CD를 인수해 재구축했습니다. Dev·Stag·Prod별 Jenkins agent·job·빌드 디렉터리를 분리하고 Fastlane·Firebase App Distribution 배포를 연결했습니다.</li>
                 <li>2026년 홈·온보딩 리뉴얼을 개발하고, 쇼핑 기능을 전면 교체한 버전을 iOS·Android에 동시 출시했습니다. iOS 26.4 업데이트 직후 발생한 스플래시 정지 현상을 네트워크 확인 타이밍 문제로 특정하고 긴급 심사로 패치했습니다.</li>
-                <li>ImageIO 다운샘플링을 적용하고 앱 초기화 오류를 수정했습니다. 비정상 건강 데이터가 있어도 유효한 데이터까지 손실되지 않도록 처리를 보완하고, 외부 모듈 연동 테스트를 보강했습니다.</li>
+                <li>ImageIO 다운샘플링을 적용하고 앱 초기화 오류를 수정했습니다. 비정상 건강 데이터가 있어도 유효한 데이터까지 손실되지 않도록 처리를 보완하고, 외부 모듈 연동 테스트를 보강했습니다. 2026년 7~9월 iOS crash-free 세션 99.8%를 유지했습니다.</li>
               </ul>
               <p class="timeline-description">4개 Bool 조합으로 관리되던 출석 광고 상태를 단일 enum 상태 머신으로 바꾸는 설계안을 제안해 iOS·Android의 상태 정의와 테스트 기준을 맞췄습니다.</p>
               <p><a class="section-link" href="https://apps.apple.com/kr/app/id1576612543" target="_blank" rel="noopener noreferrer">MyD App Store <span aria-hidden="true">↗</span></a></p>
@@ -69,11 +69,11 @@ import { SITE } from '../data/site';
             <div class="timeline-period">2025.09 — 현재</div>
             <div class="timeline-content">
               <h3 id="tbn">TBN교통방송 · React Native 앱</h3>
-              <p class="timeline-role">iOS·Android 기능 개발 · 심사·출시 · 출시 후 운영</p>
+              <p class="timeline-role">iOS·Android 기능 개발 · 심사·출시 · 출시 후 운영 · 월간 활성 사용자 약 2.8만 명(양 플랫폼 합산)</p>
               <ul class="timeline-description">
                 <li>방송·오디오 재생, 편성, 지역, 교통, 푸시, 강제 업데이트 기능을 구현했습니다. 강제 업데이트는 스플래시 단계 게이트·timeout·권한 요청 순서로 구조화했습니다.</li>
                 <li>KMC 본인인증 API·WebView 연동과 계정별 인증 상태 처리를 구현했습니다. Kakao·Apple 가입·로그인을 입력 검증·오류 자동 스크롤과 함께 기존 인증 화면에 통합했습니다.</li>
-                <li>iOS·Android 스토어 심사를 진행해 2026년 5월 28일 양 플랫폼에 정식 출시했습니다. 출시 직후 제보전화 번호 매핑 오류를 발견해 패치를 배포하고 강제 업데이트로 반영했습니다.</li>
+                <li>iOS·Android 스토어 심사를 진행해 2026년 5월 28일 양 플랫폼에 정식 출시했습니다. 출시 직후 제보전화 번호 매핑 오류를 발견해 패치를 배포하고 강제 업데이트로 반영했습니다. 2026년 9월 말 기준 활성 사용자의 98% 이상이 최신 버전을 사용합니다.</li>
                 <li>앱 시작과 foreground 복귀 시 실행 순서를 정리하고, 복귀 시 프로그램 정보를 재동기화해 오래된 방송 카드가 남는 문제를 수정했습니다. 지역·업데이트·백그라운드 청취 동작을 Jest로 검증했습니다.</li>
                 <li>구두·문자로 들어오던 고객사 요구사항을 변경 이력이 남는 시트로 일원화하고, Firebase GA 전환 로드맵과 집계 한계를 고객사에 설명했습니다.</li>
               </ul>
