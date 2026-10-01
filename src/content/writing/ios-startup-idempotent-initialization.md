@@ -2,7 +2,7 @@
 title: "iOS 초기화 중복 호출 줄이기: actor에서 실행 중인 Task 공유하기"
 description: "AppDelegate, Scene, 딥링크가 같은 초기화를 요청할 때 Task와 완료 결과를 공유하는 예제. 실패 후 재시도와 취소 정책도 살펴본다."
 publishedAt: 2026-07-13
-updatedAt: 2026-09-22
+updatedAt: 2026-10-01
 tags:
   - Swift
   - iOS
@@ -287,3 +287,7 @@ func transientFailureReturnsToIdle() async throws {
 4. 실패 후 재시도와 호출자 취소를 어떻게 처리할지 정한다.
 
 공유 범위는 조정기 인스턴스 하나다. 로그아웃이나 계정 변경으로 초기화를 다시 해야 한다면 결과를 언제 폐기할지도 함께 정해야 한다.
+
+---
+
+이 글의 조정기는 `StartupCoordinator`라는 이름으로 [ios-production-patterns](https://github.com/minjunkim-dev/ios-production-patterns) 패키지에 정리했다. 일시적 실패와 영구 실패를 구분하는 분류기, 로그아웃 뒤 결과를 폐기하는 `reset()`, 동시 호출·재시도·취소를 확인하는 테스트가 포함돼 있다.
