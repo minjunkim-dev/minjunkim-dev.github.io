@@ -17,9 +17,9 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
         <p class="eyebrow"><span class="signal" aria-hidden="true"></span> iOS · React Native</p>
         <h1 id="hero-title">모바일 엔지니어<br /><span class="muted-heading">김민준입니다.</span></h1>
         <p class="hero-copy">
-          iOS를 중심으로 React Native 앱도 개발합니다.
-          데이터·본인인증 연동, 방송·로그인, 모바일 신분증 기능을 구현하고
-          테스트·스토어 심사·배포와 출시 후 오류 수정에 참여했습니다.
+          Swift 기반 iOS 개발을 중심으로 React Native 앱까지 개발·출시·운영해 왔습니다.
+          MyD의 iOS 기능과 배포 환경을 맡고, TBN교통방송 앱을 iOS·Android에 정식 출시했으며,
+          장병e음 앱의 모바일 신분증 솔루션을 iOS 제품 코드에 통합했습니다.
         </p>
         <div class="hero-actions">
           <a class="button button-primary" href="#projects-title">주요 프로젝트 보기 <span aria-hidden="true">↓</span></a>
@@ -46,8 +46,8 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
             <div class="timeline-period">2022.06 — 현재</div>
             <div class="timeline-content">
               <h3>MyD · 개인 데이터 지갑</h3>
-              <p class="timeline-role">iOS · 데이터 거래·인증 연동</p>
-              <p class="timeline-description">데이터 거래 화면과 API를 연동하고 오류·재시도·딥링크 처리를 보완했습니다. KMC 본인인증과 쇼핑·건강 데이터 연동을 유지보수하며, ImageIO 다운샘플링과 앱 초기화 오류 수정도 맡았습니다.</p>
+              <p class="timeline-role">iOS · 데이터·인증 연동 · 심사·배포 · 운영</p>
+              <p class="timeline-description">데이터 거래 6개 핵심 화면과 API 연동을 구현하고, KMC 본인인증·생활 데이터 연동과 AppsFlyer·GA·딥링크를 맡았습니다. 중단된 iOS CI/CD를 재구축했고, iOS 26.4 업데이트 직후 발생한 스플래시 정지 현상을 긴급 심사로 패치했습니다.</p>
               <p><a class="section-link" href="/about/#myd">MyD 담당 업무 보기 <span aria-hidden="true">→</span></a></p>
             </div>
           </li>
@@ -55,8 +55,8 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
             <div class="timeline-period">2025.09 — 현재</div>
             <div class="timeline-content">
               <h3>TBN교통방송 · React Native 앱</h3>
-              <p class="timeline-role">iOS·Android · 방송·로그인·업데이트</p>
-              <p class="timeline-description">방송·오디오·지역·푸시와 KMC·Kakao·Apple 인증 기능을 개발했습니다. 앱 시작과 백그라운드 복귀 시 실행 순서를 정리하고, 2026년 5월 정식 출시와 후속 오류 수정에 참여했습니다.</p>
+              <p class="timeline-role">iOS·Android · 방송·로그인·업데이트 · 심사·출시</p>
+              <p class="timeline-description">방송·오디오·지역·푸시·강제 업데이트와 KMC·Kakao·Apple 인증 기능을 구현했습니다. iOS·Android 심사를 진행해 2026년 5월 양 플랫폼에 정식 출시하고, 출시 직후 발견한 오류를 패치해 강제 업데이트로 반영했습니다.</p>
               <p><a class="section-link" href="/about/#tbn">TBN 담당 업무 보기 <span aria-hidden="true">→</span></a></p>
             </div>
           </li>
@@ -65,7 +65,7 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
             <div class="timeline-content">
               <h3>장병e음 앱 내 모바일 신분증</h3>
               <p class="timeline-role">iOS 모듈 통합 · Android 기능 보완</p>
-              <p class="timeline-description">DID·VC 발급·서명과 온라인·오프라인 검증, 앱 잠금·생체인증을 연동했습니다. 담당 범위는 장병e음 전체 앱이 아닌 모바일 신분증 솔루션이며, 일부 기능은 다른 개발자와 공동 구현했습니다.</p>
+              <p class="timeline-description">iOS 앱에 신분증 모듈을 통합하고 DID·VC 발급·서명, 온라인·오프라인 검증, 앱 잠금·생체인증, 보안 SDK·취약점 대응을 구현했습니다. 담당 범위는 장병e음 전체 앱이 아닌 모바일 신분증 솔루션이며, 일부 기능은 다른 개발자와 공동 구현했습니다.</p>
               <p><a class="section-link" href="/about/#mobile-id">모바일 신분증 담당 업무 보기 <span aria-hidden="true">→</span></a></p>
             </div>
           </li>
@@ -80,8 +80,8 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
           <h2 id="experience-title">개발을 뒷받침하는<br />테스트와 배포 경험</h2>
         </div>
         <div class="split-copy-body">
-          <p>XCTest·Jest로 데이터 처리와 앱 동작을 검증하고, Jenkins·Fastlane·Firebase App Distribution을 이용해 중단된 iOS 배포 파이프라인을 재구축했습니다.</p>
-          <p>MyTalk에서는 Flutter 앱의 iOS App Check 연동과 Apple 연결 해제·탈퇴 처리를 보완했습니다. Kotlin/Android 기능 보완과 KMP 네이티브 연동 경험도 있습니다.</p>
+          <p>XCTest·Jest로 데이터 처리와 앱 동작을 검증합니다. 중단된 iOS 배포 파이프라인을 인수해 Dev·Stag·Prod별 Jenkins agent·job을 분리하고, Fastlane·Firebase App Distribution 배포를 연결했습니다.</p>
+          <p>MyTalk에서는 Flutter 앱의 iOS App Check 연동과 Apple 연결 해제·탈퇴 처리를 보완했습니다. Kotlin/Android 기능 보완, KMP 네이티브 연동, 신입 iOS 개발자 멘토링 경험도 있습니다.</p>
           <a class="section-link" href="/about/">전체 경력·기술·학력 보기 <span aria-hidden="true">→</span></a>
         </div>
       </div>
