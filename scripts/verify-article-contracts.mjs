@@ -96,6 +96,28 @@ for (const [fetchStub, expected] of loaderCases) {
 }
 console.log(`Policy loader runtime checks passed (${loaderCases.length} cases).`);
 
+// Execute the article's gate decision: only a confirmed policy with an older version may block.
+const decider = typeScriptBlocks.find((block) => block.includes('function decideGate'));
+const deciderJS = ts.transpileModule(`${typeDefinitions}\n${storeURLGuard}\n${decider}`, {
+  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 },
+}).outputText;
+const decide = Function(`${deciderJS}\nreturn decideGate;`)();
+const gateCases = [
+  ['2.0.0', { ok: true, policy }, { kind: 'open', mode: 'normal' }],
+  ['2.0.1', { ok: true, policy }, { kind: 'open', mode: 'normal' }],
+  ['1.9.9', { ok: true, policy }, { kind: 'blocked', minimumVersion: '2.0.0', storeURL: policy.storeURL.ios }],
+  ['1.9.9', { ok: false, reason: 'timeout' }, { kind: 'open', mode: 'fail-open', reason: 'timeout' }],
+  ['1.9.9', { ok: false, reason: 'network' }, { kind: 'open', mode: 'fail-open', reason: 'network' }],
+  ['bad', { ok: true, policy }, { kind: 'open', mode: 'fail-open', reason: 'invalid-payload' }],
+];
+for (const [version, result, expected] of gateCases) {
+  const actual = decide(version, 'ios', result);
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(`decideGate(${version}): expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+  }
+}
+console.log(`Gate decision runtime checks passed (${gateCases.length} cases).`);
+
 const checks = [
   {
     name: 'store URL validation must parse the URL instead of trusting an HTTPS prefix',
@@ -123,6 +145,21 @@ const checks = [
   {
     name: 'the article store URL guard must pass all runtime cases',
     pass: storeURLBehaviorPass,
+  },
+  {
+    name: 'force-update article must compare fail-open with fail-closed before the code',
+    pass:
+      forceUpdate.includes('## 결정') &&
+      forceUpdate.indexOf('fail-closed') > -1 &&
+      forceUpdate.indexOf('fail-closed') < forceUpdate.indexOf('## 구현 1'),
+  },
+  {
+    name: 'force-update article must include an accessible state diagram',
+    pass: /<svg[^>]*role="img"[^>]*aria-label="[^"]+"/.test(forceUpdate),
+  },
+  {
+    name: 'force-update article must state results with their measurement source',
+    pass: forceUpdate.includes('## 결과') && forceUpdate.includes('콘솔 조회값'),
   },
   {
     name: 'ImageIO decoding must expose explicit aspect-fit and aspect-fill policies',
