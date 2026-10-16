@@ -5,16 +5,16 @@ import { SITE } from '../data/site';
 
 <BaseLayout
   title="경력·프로젝트"
-  description="모바일 엔지니어 김민준의 경력과 프로젝트별 기여입니다. MyD, TBN교통방송, 장병e음 앱 내 모바일 신분증 개발 경험을 소개합니다."
+  description="모바일 엔지니어 김민준의 경력과 프로젝트별 기여입니다. MyD, TBN교통방송, 장병e음 모바일 신분증, B2B 데이터 SDK와 개인 프로젝트를 소개합니다."
 >
   <main id="main-content">
     <header class="page-heading shell">
       <p class="eyebrow">About / Experience</p>
       <h1>모바일 엔지니어<br />김민준입니다.</h1>
       <p class="page-heading-copy">
-        Swift 기반 iOS 개발을 중심으로 React Native 앱까지 개발·출시·운영해 왔습니다.
-        기능 구현 뒤의 테스트, 스토어 심사, 배포, 출시 후 장애 대응까지 맡습니다.
-        복잡한 기능은 상태와 데이터 흐름을 먼저 정리한 뒤 구현하고, 장애는 앱·서버·외부 SDK의 로그와 환경 차이를 함께 보며 원인을 좁힙니다.
+        Swift 기반 iOS 개발을 중심으로 React Native 앱까지 개발·심사·출시·운영해 왔습니다(경력 4년 4개월).
+        앱이 의존하는 SDK, 인증 서버, CI/CD도 직접 구성했습니다.
+        문제는 측정과 재현으로 원인부터 찾고, 결정과 근거를 문서로 남깁니다.
       </p>
     </header>
 
@@ -24,16 +24,16 @@ import { SITE } from '../data/site';
           <p class="mono-label">01 / Experience</p>
           <h2 id="experience-title">Personal AI(구 SNPLAB)</h2>
           <p class="timeline-role">앱팀 · 선임연구원 · 정규직</p>
-          <p class="timeline-period">2022.06.02 — 현재</p>
+          <p class="timeline-period">2022.06.02 — 2026.10.19</p>
           <div class="about-copy">
-            <p>MyD의 iOS 기능 개발·심사·배포를 맡아 왔고, React Native 앱의 양 플랫폼 출시와 모바일 신분증 모듈 통합을 수행했습니다. iOS 배포 자동화 재구축과 운영 인수인계도 담당했습니다.</p>
+            <p>MyD의 iOS 기능 개발·심사·배포를 맡았고, React Native 앱의 양 플랫폼 출시와 모바일 신분증 모듈 통합을 수행했습니다. 2026년에는 파트너 앱용 데이터 SDK와 인증 서버를 혼자 설계·구현하고, 사내 CI·배포·모니터링을 구성했습니다.</p>
           </div>
         </div>
         <dl class="fact-list">
-          <div class="fact-row"><dt>주력 기술</dt><dd>Swift · SwiftUI · UIKit</dd></div>
+          <div class="fact-row"><dt>주력 기술</dt><dd>Swift · SwiftUI · Swift Concurrency</dd></div>
           <div class="fact-row"><dt>크로스플랫폼</dt><dd>React Native · TypeScript</dd></div>
           <div class="fact-row"><dt>연락처</dt><dd><a href={`mailto:${SITE.email}`}>{SITE.email}</a></dd></div>
-          <div class="fact-row"><dt>공개 작업</dt><dd><a href={SITE.repository} target="_blank" rel="noopener noreferrer">iOS Production Patterns</a></dd></div>
+          <div class="fact-row"><dt>공개 작업</dt><dd><a href={SITE.github} target="_blank" rel="noopener noreferrer">github.com/minjunkim-dev</a></dd></div>
         </dl>
       </div>
     </section>
@@ -45,38 +45,34 @@ import { SITE } from '../data/site';
             <p class="mono-label">02 / Projects</p>
             <h2 id="projects-title">주요 프로젝트</h2>
           </div>
-          <p>프로젝트별로 직접 개발하거나 보완한 기능과 참여 범위를 정리했습니다.</p>
+          <p>프로젝트별로 직접 개발한 기능, 해결한 문제, 참여 범위를 정리했습니다.</p>
         </div>
         <ol class="timeline">
           <li class="timeline-item">
-            <div class="timeline-period">2022.06 — 현재</div>
+            <div class="timeline-period">2022.06 — 2026.10</div>
             <div class="timeline-content">
               <h3 id="myd">MyD · 개인 데이터 지갑</h3>
               <p class="timeline-role">iOS 기능 개발 · 데이터·인증 연동 · 심사·배포(2022.06 이후 87개 버전) · 운영</p>
               <ul class="timeline-description">
-                <li>데이터 거래 개편의 6개 핵심 화면과 서버 API 연동을 구현하고, 오류·재시도·딥링크·모달 동작을 보완한 뒤 QA와 배포까지 진행했습니다.</li>
-                <li>KMC 본인인증 WebView 흐름을 구현하고 쇼핑·건강검진·진료기록·금융 데이터의 연결·조회 기능을 개발했습니다. 외부 스크래핑 솔루션의 제약을 정리하고 iOS·Android 오류 처리를 통합했습니다.</li>
-                <li>AppsFlyer·GA·ATT·딥링크를 연동하고 신규 설치·재설치 조건을 테스트했습니다. Dev·Stag에서 FCM이 동작하지 않던 원인을 빌드의 Firebase 환경 설정 참조 문제로 규명해 수정했습니다.</li>
-                <li>Flutter 도입 후 중단된 iOS CI/CD를 인수해 재구축했습니다. Dev·Stag·Prod별 Jenkins agent·job·빌드 디렉터리를 분리하고 Fastlane·Firebase App Distribution 배포를 연결했습니다.</li>
-                <li>2026년 5월 홈·온보딩 리뉴얼을 개발하고, 쇼핑 기능을 전면 교체한 버전을 iOS·Android에 동시 출시했습니다. iOS 26.4 업데이트 직후 발생한 스플래시 정지 현상을 네트워크 확인 타이밍 문제로 특정하고, 긴급 심사 요청으로 제출 8시간 만에 패치를 배포했습니다.</li>
-                <li>ImageIO 다운샘플링을 적용하고 앱 초기화 오류를 수정했습니다. 비정상 건강 데이터가 있어도 유효한 데이터까지 손실되지 않도록 처리를 보완하고, 외부 모듈 연동 테스트를 보강했습니다. 2026년 7~9월 iOS crash-free 세션 99.8%를 유지했습니다.</li>
+                <li>iOS 26.4 업데이트 직후 발생한 스플래시 정지를 네트워크 확인 타이밍 문제로 특정하고, 긴급 심사 요청으로 제출 8시간 만에 패치를 배포했습니다. 2026년 7~9월 iOS crash-free 세션 99.8%를 유지했습니다.</li>
+                <li>홈에서 swipe 후 화면과 터치가 멈추는 문제를 pop gesture 판정이 항상 통과하는 데서 찾았습니다. pop할 화면이 있을 때만 허용하고, Flutter 화면 전환 전후 설정을 저장·복원해 회귀 테스트로 고정했습니다.</li>
+                <li>Flutter 도입 후 중단된 iOS CI/CD를 Dev·Stag·Prod 분리 구조로 재구축했고, 이후 Fastlane internal/candidate lane과 GitLab CI 스토어 배포로 옮겼습니다. 같은 이름의 인증서 2개로 실패하던 release 서명은 SHA-1 고정으로 해결했습니다.</li>
+                <li>데이터 거래 개편의 6개 핵심 화면과 서버 API 연동, KMC 본인인증 WebView, 건강검진·금융 데이터 연동을 구현했습니다. 2026년 5월 홈·온보딩 리뉴얼을 iOS·Android에 동시 출시했습니다.</li>
               </ul>
-              <p class="timeline-description">출석 광고 상태를 4개 Bool(16가지 조합)에서 6개 상태의 enum 상태 머신으로 바꾸는 설계안을 제안했습니다. 기획에 없는 조합이 버그로 이어지는 문제를 막고, 연속 실패처럼 기존 테스트가 놓친 경우를 재현해 iOS·Android의 상태 정의와 테스트 기준을 맞췄습니다.</p>
+              <p class="timeline-description">출석 광고 상태를 4개 Bool(16가지 조합)에서 6개 상태의 enum 상태 머신으로 바꾸는 설계안을 제안했습니다. 기획에 없는 조합이 버그로 이어지는 문제를 막고 iOS·Android의 상태 정의와 테스트 기준을 맞췄습니다.</p>
               <p><a class="section-link" href="https://apps.apple.com/kr/app/id1576612543" target="_blank" rel="noopener noreferrer">MyD App Store <span aria-hidden="true">↗</span></a></p>
             </div>
           </li>
           <li class="timeline-item">
-            <div class="timeline-period">2025.07 — 현재</div>
+            <div class="timeline-period">2025.07 — 2026.10</div>
             <div class="timeline-content">
               <h3 id="tbn">TBN 교통정보 앱(App) 고도화 사업 · React Native 앱</h3>
               <p class="timeline-role">TBN교통방송 모바일 앱 · iOS·Android 기능 개발 · 심사·출시 · 출시 후 운영</p>
               <ul class="timeline-description">
-                <li>방송·오디오 재생, 편성, 지역, 교통, 푸시, 강제 업데이트 기능을 구현했습니다. 강제 업데이트는 스플래시 단계 게이트·timeout·권한 요청 순서로 구조화하고, 정책 조회에 실패하면 차단 대신 진입을 허용하는 fail-open으로 설계해 정책 서버 장애가 전체 사용자를 잠그지 않게 했습니다.</li>
-                <li>KMC 본인인증 API·WebView 연동과 계정별 인증 상태 처리를 구현했습니다. Kakao·Apple 가입·로그인을 입력 검증·오류 자동 스크롤과 함께 기존 인증 화면에 통합했습니다.</li>
-                <li>iOS·Android 스토어 심사를 진행해 2026년 5월 28일 양 플랫폼에 정식 출시했습니다. 출시 직후 제보전화 번호 매핑 오류를 발견해 패치를 배포하고 강제 업데이트로 반영했습니다. 2026년 9월 말 기준 활성 사용자의 98% 이상이 최신 버전을 사용합니다.</li>
-                <li>앱 시작과 foreground 복귀 시 실행 순서를 정리하고, 복귀 시 프로그램 정보를 재동기화해 오래된 방송 카드가 남는 문제를 수정했습니다. 지역·업데이트·백그라운드 청취 동작을 Jest로 검증했습니다.</li>
-                <li>구두·문자로 들어오던 고객사 요구사항을 변경 이력이 남는 시트로 일원화하고, Firebase GA 전환 로드맵과 집계 한계를 고객사에 설명했습니다.</li>
-                <li>서버의 과도한 XSS 입력 필터링이 모바일·어드민 기능에 주는 영향을 분석해 재검토를 요청하고, 불필요한 필터를 제거했습니다.</li>
+                <li>강제 업데이트를 스플래시 단계 게이트·timeout·권한 요청 순서로 구조화하고, 정책 조회에 실패하면 차단 대신 진입을 허용하는 fail-open으로 설계해 정책 서버 장애가 전체 사용자를 잠그지 않게 했습니다. 2026년 9월 말 활성 사용자의 98% 이상이 최신 버전을 사용합니다.</li>
+                <li>방송·오디오, 편성, 교통 제보, 푸시, KMC 본인인증, Kakao·Apple 로그인을 구현하고 2026년 5월 28일 양 플랫폼에 정식 출시했습니다.</li>
+                <li>동시 요청마다 따로 실행되던 토큰 갱신을 공유 refresh 큐로 묶고, 인증·푸시 토큰·동의 상태 동기화를 직렬화와 원자 저장으로 바꿔 경합을 없앴습니다. 홈 이모티콘 렌더링을 약 278ms에서 5ms 이하로 줄였습니다.</li>
+                <li>원인 불명이던 Android CI 실패를 cgroup 메모리 측정으로 규명했습니다. 9GiB 한도에서 clang++ 22개가 동시에 실행되어 Gradle이 OOM으로 종료되었고, 컴파일 동시성을 제한해 release 빌드를 처음 통과시켰습니다.</li>
               </ul>
               <p><a class="section-link" href="https://apps.apple.com/kr/app/id969867489" target="_blank" rel="noopener noreferrer">TBN App Store <span aria-hidden="true">↗</span></a></p>
             </div>
@@ -88,9 +84,8 @@ import { SITE } from '../data/site';
               <p class="timeline-role">국방부 장병e음 앱 내 모바일 신분증 솔루션 · iOS 모듈 통합·기능 개발 · Android 기능 단위 보완</p>
               <ul class="timeline-description">
                 <li>Swift·SwiftUI 기반 iOS 앱에 모바일 신분증 모듈을 통합했습니다. 사진 등록, DID 생성, nonce 서명, 신분증 발급, VC 메타데이터 등록, 토큰 갱신 흐름을 구현했습니다.</li>
-                <li>온라인 검증을 초기 구현하고 WebSocket 전환 이후 환경 분기·timeout·결과 화면을 보완했습니다. 오프라인 검증에는 Groth16 proof 생성·검증 리소스와 QR 검증을 연계했습니다.</li>
-                <li>사용이력, 푸시 수신 동의, 무효화·재발급, 선택 권한, 앱 잠금·생체인증, QR 확대 기능을 구현했습니다. 화면 캡처 방지와 보안 SDK(NFilter·ORA-X)를 통합하고 다차수 취약점 점검(CWE)의 대응 코드를 반영했습니다.</li>
-                <li>Kotlin/Android에서는 최소 버전 기반 업데이트 정책, 화면 보안, 보안 키패드 실패 처리, QR 확대, 정적 분석 대응을 기능 단위로 수정했습니다.</li>
+                <li>온라인 검증을 초기 구현하고 WebSocket 전환 이후 환경 분기·timeout·결과 화면을 보완했습니다. 오프라인 검증에는 Groth16 proof와 QR 검증을 연계했습니다.</li>
+                <li>앱 잠금·생체인증, 화면 캡처 방지, 무효화·재발급을 구현하고 보안 SDK(NFilter·ORA-X)를 통합했습니다. 다차수 취약점 점검(CWE)의 대응 코드를 반영했습니다.</li>
               </ul>
               <p class="timeline-description">담당 범위는 앱 내 모바일 신분증 솔루션입니다. WebSocket 전환과 Android 핵심 신분증 흐름은 다른 개발자와 공동 구현했습니다.</p>
               <p><a class="section-link" href="https://apps.apple.com/kr/app/id6744992032" target="_blank" rel="noopener noreferrer">장병e음 App Store <span aria-hidden="true">↗</span></a></p>
@@ -104,18 +99,34 @@ import { SITE } from '../data/site';
       <div class="shell split-copy">
         <div>
           <p class="mono-label">03 / Additional experience</p>
-          <h2 id="additional-title">공통 업무·추가 경험</h2>
+          <h2 id="additional-title">SDK·서버·배포 자동화</h2>
         </div>
         <div class="split-copy-body">
-          <h3>배포 자동화·운영 인수인계</h3>
-          <p>중단된 iOS 배포 파이프라인을 재구축했습니다. 개발·스테이징·운영 환경별 Jenkins 작업과 빌드 디렉터리를 분리하고, Fastlane·Firebase App Distribution을 연결했습니다.</p>
-          <p>Native·Flutter·KMP의 환경·버전 관리 기준과 MyD WebView·관리자 웹의 배포·승인·산출물 검증·복구 절차를 문서화했습니다.</p>
+          <h3>B2B 데이터 SDK와 인증 서버 (2026.08 — 2026.09)</h3>
+          <p>파트너 앱에 넣는 공공기관 데이터 연결 SDK(iOS·Android)와 Node.js·PostgreSQL 인증 서버를 혼자 설계·구현했습니다. 파트너 Secret을 앱에 넣지 않도록 짧은 수명 토큰과 서버가 서명한 정책을 SDK가 검증하는 구조를 만들었습니다. 0.63%(2,400세션 중 15건) 간헐 실패를 제품 코드의 race로 규명해 0건으로 만들었습니다.</p>
+          <h3>배포 자동화와 사내 인프라 (2026.07 — 2026.10)</h3>
+          <p>GitLab Runner를 구성하고 캐시·병렬화로 Android 빌드를 413초에서 174초로 줄였습니다. CI 서버 디스크 100% 장애를 정리하고 자동 정리기를 설치했습니다. 웹 프론트 배포는 공개 응답의 SHA-256이 산출물과 같을 때만 성공으로 판정하도록 재설계했습니다.</p>
+          <h3>마이주식 · 보안·배포·서버리스 백엔드 (2026.09 출시)</h3>
+          <p>Firebase Functions로 4개 소셜 로그인의 연결 해제·탈퇴 정리를 구현하고 App Attest 기반 App Check를 연동했습니다. 출시 당일 구형 앱 회원가입 장애를 운영 로그로 규명하고, 요청 형식으로 구형 계약을 구분해 복구했습니다.</p>
           <h3>기술 조사·설계 (2024)</h3>
-          <p>모바일 신분증 도입에 앞서 App Attest·DID·VC·ZKP를 조사하고 iOS Attestation 샘플을 구현·검증했습니다. ZKP만으로는 증명 입력이 발급 원본인지 보장되지 않는 점을 짚어, VC 필드의 Merkle Root를 발급자가 서명하고 검증자가 Root를 재계산한 뒤 proof를 검증하는 방안을 제안했습니다. proof 생성 주체를 클라이언트·서버로 나눠 시간·공간 비용을 비교해 문서화했습니다.</p>
-          <h3>마이주식 · Flutter 앱의 iOS 연동·인증 보완 (2026.09 출시)</h3>
-          <p>iOS App Attest 기반 Firebase App Check를 연동하고 환경별 설정과 토큰 갱신 순서를 보완했습니다. Apple 연결 해제용 토큰의 서버 암호화 저장, 가입 중단 시 정리, 탈퇴 재시도와 연결 해제 후 토큰 삭제를 구현·보완했습니다. 관광 콘텐츠 기능의 Flutter/iOS 보완과 공동 QA에도 참여했습니다.</p>
-          <h3>외부 파트너 협업·멘토링</h3>
-          <p>외부 헬스케어 앱 프로젝트의 기술 창구로 API·endpoint 변경을 조율하고 iOS 운영 이슈를 수정했습니다. Figma 기준 테스트 케이스로 내부 QA를 진행해 외부 개발팀에 전달했습니다. 신입 iOS 개발자와 토이 프로젝트 3차례를 진행하고 개발 환경 설정과 코드 리뷰를 지원했습니다.</p>
+          <p>모바일 신분증 도입에 앞서 App Attest·DID·VC·ZKP를 조사하고 iOS Attestation 샘플을 구현·검증했습니다. ZKP만으로는 증명 입력이 발급 원본인지 보장되지 않는 점을 짚어, VC 필드의 Merkle Root를 발급자가 서명하고 검증자가 재계산한 뒤 proof를 검증하는 방안을 제안했습니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-section" aria-labelledby="side-title">
+      <div class="shell split-copy">
+        <div>
+          <p class="mono-label">04 / Side projects</p>
+          <h2 id="side-title">개인 프로젝트</h2>
+        </div>
+        <div class="split-copy-body">
+          <h3><a href="https://github.com/minjunkim-dev/mobile-runtime" target="_blank" rel="noopener noreferrer">Runstir</a> · React Native 실행 환경 CLI</h3>
+          <p><code>git clone</code> 후 <code>mobile up</code> 한 번으로 React Native 앱을 Simulator·Emulator에서 실행하는 macOS CLI입니다(Swift 6.2). 다른 프로젝트의 Metro를 재사용해 실패를 성공으로 보고하던 문제를 Metro 정체성 판정으로 고쳤습니다. 테스트 415개, ADR 37건.</p>
+          <h3><a href="https://github.com/minjunkim-dev/smallnext" target="_blank" rel="noopener noreferrer">smallnext</a> · LLM 기반 플래너 (SwiftUI + Rust API)</h3>
+          <p>LLM 호출을 생성기와 검사기로 나누고, 비용을 예약·정산 원장으로 통제합니다. 검사 지연의 대부분이 추론 토큰임을 측정으로 확인해 32.2초에서 19.5초로 줄였습니다(로컬 실측, 품질 47/47 유지).</p>
+          <h3><a href={SITE.repository} target="_blank" rel="noopener noreferrer">iOS Production Patterns</a></h3>
+          <p>운영에서 겪은 문제를 일반화한 Swift 6 패키지입니다. fail-open version gate, latest-request gate, bounded timeout, actor 기반 초기화 공유를 테스트와 CI로 검증합니다.</p>
         </div>
       </div>
     </section>
@@ -123,15 +134,15 @@ import { SITE } from '../data/site';
     <section class="page-section" aria-labelledby="skills-title">
       <div class="shell split-copy">
         <div>
-          <p class="mono-label">04 / Skills</p>
+          <p class="mono-label">05 / Skills</p>
           <h2 id="skills-title">사용 기술</h2>
         </div>
         <dl class="fact-list">
-          <div class="fact-row"><dt>주력</dt><dd>Swift · SwiftUI · UIKit</dd></div>
-          <div class="fact-row"><dt>앱 개발</dt><dd>React Native · TypeScript</dd></div>
-          <div class="fact-row"><dt>기능 보완·연동</dt><dd>Kotlin/Android · Flutter/Dart · KMP 네이티브 연동</dd></div>
-          <div class="fact-row"><dt>테스트·배포</dt><dd>XCTest · Jest · Jenkins · Fastlane · Firebase App Distribution</dd></div>
-          <div class="fact-row"><dt>인증·연동</dt><dd>KMC · WebView · Kakao·Apple 로그인 · DID·VC · Firebase App Check</dd></div>
+          <div class="fact-row"><dt>iOS</dt><dd>Swift · SwiftUI · UIKit · Swift Concurrency · SwiftPM · XCFramework</dd></div>
+          <div class="fact-row"><dt>크로스플랫폼</dt><dd>React Native · TypeScript · Kotlin/Android · Flutter 연동</dd></div>
+          <div class="fact-row"><dt>서버</dt><dd>Node.js · Rust(axum) · PostgreSQL · Firebase Functions</dd></div>
+          <div class="fact-row"><dt>테스트·배포</dt><dd>XCTest · Jest · GitLab CI · Fastlane · Jenkins</dd></div>
+          <div class="fact-row"><dt>인증·보안</dt><dd>KMC · Kakao·Apple 로그인 · DID·VC · App Attest · JWS</dd></div>
         </dl>
       </div>
     </section>
@@ -139,11 +150,11 @@ import { SITE } from '../data/site';
     <section class="page-section" aria-labelledby="education-title">
       <div class="shell split-copy">
         <div>
-          <p class="mono-label">05 / Education</p>
+          <p class="mono-label">06 / Education</p>
           <h2 id="education-title">학력</h2>
         </div>
         <div class="split-copy-body">
-          <p><strong>세종대학교 데이터사이언스학과 · 학사</strong><br />2018.03 — 2022.02 · 단과대학 수석 졸업 · 학점 4.42 / 4.5</p>
+          <p><strong>세종대학교 데이터사이언스학과 · 학사</strong><br />2018.03 — 2022.02 · 학과·학부 수석 졸업 · 학점 4.42 / 4.5</p>
         </div>
       </div>
     </section>
