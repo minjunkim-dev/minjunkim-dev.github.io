@@ -1,30 +1,28 @@
 ---
-title: "React Native 강제 업데이트: 정책 조회 실패와 업데이트 대상을 구분하기"
-description: "정책 조회에 실패하면 앱 진입을 허용하고, 최소 지원 버전보다 낮을 때만 차단하는 TypeScript 예제와 테스트 항목."
+title: "정책 서버가 죽어도 앱은 열려야 한다: 라이브 방송 앱의 fail-open 강제 업데이트"
+description: "운전 중 듣는 라이브 방송 앱에서 강제 업데이트를 설계한 기록. 정책 조회 실패와 업데이트 대상을 다른 상태로 나누고, 실패하면 진입을 허용한 이유와 결과를 정리한다."
 publishedAt: 2026-07-04
-updatedAt: 2026-09-22
+updatedAt: 2026-10-16
 tags:
-  - TypeScript
   - React Native
+  - TypeScript
   - Reliability
-  - State Modeling
+  - Production Notes
 draft: false
 featured: true
 ---
 
-강제 업데이트 기능은 오래된 앱이 더 이상 안전하게 동작할 수 없을 때 유용하다. 서버에서 최소 지원 버전을 받고, 현재 버전이 낮으면 스토어 이동 화면을 보여 준다. 정상 경로만 보면 간단하다.
+## 상황
 
-문제는 정책 서버가 느리거나, 응답 형식이 바뀌거나, 일부 네트워크에서 도달할 수 없을 때 시작된다. “확인에 실패했다”를 “업데이트가 필요하다”로 해석하면 버전 정책 시스템의 장애가 정상 앱까지 잠근다. 업데이트를 통해 복구하라는 화면이 뜨지만 스토어의 최신 버전도 같은 원격 장애를 만날 수 있다.
+TBN교통방송 앱은 13개 지역 FM 라이브 방송을 듣고 교통 정보를 제보하는 React Native 앱이다. 2025년부터 앱을 다시 만들었고 2026년 5월 28일 iOS·Android에 정식 출시했다. 사용자는 주로 운전 중에 앱을 연다. 앱이 열리지 않으면 방송을 듣지 못하고, 운전 중에 원인을 찾을 수도 없다.
 
-이 글은 업데이트 정책 조회와 화면 분기를 설명하기 위해 공개용으로 재구성한 예제다. 실서비스 코드나 성능 측정 결과는 아니며, 다음 정책을 가정한다.
+출시를 앞두고 강제 업데이트가 필요했다. 오래된 버전에서 서버 계약이 바뀌면 기능이 조용히 깨지기 때문이다. 서버가 플랫폼별 최소 지원 버전을 알려 주고, 현재 버전이 낮으면 스토어로 안내한다. 정상 경로만 보면 단순하다.
 
-> 유효한 정책을 받아 현재 버전이 최소 지원 버전보다 낮다고 확인된 경우에만 차단한다. 네트워크·타임아웃·파싱 오류로 판단할 수 없으면 앱 진입을 허용하고, 실패 이유를 `fail-open` 상태에 담는다.
+이 글의 코드는 제품 코드를 옮긴 것이 아니다. 같은 판단 구조를 공개용으로 다시 쓴 코드다.
 
-보안상 정책 확인에 실패해도 차단해야 하는 요구사항이 있다면 fail-closed가 필요할 수 있다. 여기서는 조회 실패와 업데이트 필요 상태를 구분해 화면에서 다르게 처리한다.
+## 문제: Boolean 하나가 두 가지 뜻을 가진다
 
-## `isUpdateRequired: boolean`이 부족한 이유
-
-다음 함수는 조회에 실패해도 업데이트가 필요하다고 반환한다.
+처음 떠오르는 구현은 다음과 같다.
 
 ```typescript
 async function isUpdateRequired(): Promise<boolean> {
@@ -37,9 +35,53 @@ async function isUpdateRequired(): Promise<boolean> {
 }
 ```
 
-`true`가 “정책이 현재 버전을 차단했다”와 “서버에 연결하지 못했다”를 동시에 뜻한다. UI는 둘을 구분할 수 없고, 로그 역시 실제 강제 업데이트와 원격 장애를 같은 사건으로 기록한다.
+`true`가 "정책이 이 버전을 막았다"와 "정책 서버에 연결하지 못했다"를 모두 뜻한다. 정책 서버가 느려지거나 응답 형식이 바뀌면 모든 사용자가 업데이트 화면에 갇힌다. 최신 버전으로 업데이트해도 같은 서버 장애를 만나므로 빠져나갈 길이 없다. 로그에서도 실제 강제 업데이트와 서버 장애가 같은 사건으로 남는다.
 
-먼저 정책 조회 결과와 앱 진입 화면의 상태를 나눈다.
+## 결정: 확인하지 못하면 연다 (fail-open)
+
+선택지는 세 가지였다.
+
+| 선택지 | 정책 서버 장애 때 | 판단 |
+|---|---|---|
+| fail-closed: 확인 실패도 차단 | 모든 사용자가 앱을 못 연다 | 보안 정책이 반드시 지켜져야 할 때만 맞다. 방송 앱에서는 장애 범위가 너무 크다 |
+| 마지막 정책 캐시로 판단 | 캐시가 있으면 판단을 이어 간다 | 캐시 수명, 기기 시간 오류, 해제된 차단이 남는 문제를 함께 풀어야 한다. 1차 출시 범위를 넘는다 |
+| **fail-open: 확인 실패는 진입 허용** | 앱은 열리고, 다음 실행에서 다시 확인한다 | 장애가 진입 장애로 번지지 않는다. 실패 이유를 기록해 장애를 따로 감지한다 |
+
+fail-open을 골랐다. 차단은 **유효한 정책을 받았고, 현재 버전이 최소 버전보다 낮다고 확인된 경우에만** 일어난다. 네트워크·timeout·HTTP·형식 오류는 진입을 허용하되 실패 이유를 상태에 담는다.
+
+<figure>
+<svg viewBox="0 0 680 300" role="img" aria-label="강제 업데이트 게이트 상태 전이도: checking에서 조회 실패 시 fail-open, 정책 확인 후 버전이 같거나 높으면 normal, 낮으면 blocked" xmlns="http://www.w3.org/2000/svg" font-family="Pretendard, -apple-system, sans-serif">
+  <defs><marker id="fo-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4d4d4d"/></marker></defs>
+  <rect x="20" y="120" width="130" height="56" rx="8" fill="#fafafa" stroke="#171717"/>
+  <text x="85" y="145" text-anchor="middle" font-size="15" font-weight="700" fill="#171717">checking</text>
+  <text x="85" y="164" text-anchor="middle" font-size="12" fill="#4d4d4d">스플래시 · timeout</text>
+  <rect x="270" y="20" width="160" height="56" rx="8" fill="#fff" stroke="#171717"/>
+  <text x="350" y="45" text-anchor="middle" font-size="15" font-weight="700" fill="#171717">open · fail-open</text>
+  <text x="350" y="64" text-anchor="middle" font-size="12" fill="#4d4d4d">실패 이유 기록</text>
+  <rect x="270" y="120" width="160" height="56" rx="8" fill="#fff" stroke="#171717"/>
+  <text x="350" y="145" text-anchor="middle" font-size="15" font-weight="700" fill="#171717">open · normal</text>
+  <text x="350" y="164" text-anchor="middle" font-size="12" fill="#4d4d4d">현재 ≥ 최소 버전</text>
+  <rect x="270" y="220" width="160" height="56" rx="8" fill="#fff" stroke="#171717" stroke-width="2"/>
+  <text x="350" y="245" text-anchor="middle" font-size="15" font-weight="700" fill="#171717">blocked</text>
+  <text x="350" y="264" text-anchor="middle" font-size="12" fill="#4d4d4d">현재 &lt; 최소 버전</text>
+  <rect x="520" y="70" width="140" height="56" rx="8" fill="#fafafa" stroke="#171717"/>
+  <text x="590" y="95" text-anchor="middle" font-size="15" font-weight="700" fill="#171717">권한 요청</text>
+  <text x="590" y="114" text-anchor="middle" font-size="12" fill="#4d4d4d">→ 홈</text>
+  <path d="M150,135 L266,52" fill="none" stroke="#4d4d4d" stroke-width="1.5" marker-end="url(#fo-arrow)"/>
+  <text x="262" y="30" text-anchor="end" font-size="12" fill="#4d4d4d">timeout · network</text>
+  <text x="262" y="46" text-anchor="end" font-size="12" fill="#4d4d4d">http · invalid-payload</text>
+  <path d="M150,148 L266,148" fill="none" stroke="#4d4d4d" stroke-width="1.5" marker-end="url(#fo-arrow)"/>
+  <text x="208" y="141" text-anchor="middle" font-size="12" fill="#4d4d4d">정책 확인</text>
+  <path d="M150,162 L266,244" fill="none" stroke="#4d4d4d" stroke-width="1.5" marker-end="url(#fo-arrow)"/>
+  <text x="262" y="262" text-anchor="end" font-size="12" fill="#4d4d4d">정책 확인 + 버전 낮음</text>
+  <path d="M430,48 L516,90" fill="none" stroke="#4d4d4d" stroke-width="1.5" marker-end="url(#fo-arrow)"/>
+  <path d="M430,148 L516,106" fill="none" stroke="#4d4d4d" stroke-width="1.5" marker-end="url(#fo-arrow)"/>
+  <text x="440" y="250" font-size="12" fill="#4d4d4d">스토어 안내에 머문다</text>
+</svg>
+<figcaption>차단으로 가는 길은 하나뿐이다. 권한 요청은 업데이트 판정 뒤로 옮겼다.</figcaption>
+</figure>
+
+## 구현 1: 조회 결과와 화면 상태를 나눈다
 
 ```typescript
 type Platform = 'ios' | 'android';
@@ -70,11 +112,209 @@ type GateState =
     };
 ```
 
-`blocked`에는 스토어 URL과 최소 버전이, `fail-open`에는 정책을 확인하지 못한 이유가 필요하다. `isLoading`, `hasError`, `isRequired`를 따로 관리할 때와 달리 로딩과 차단을 동시에 표현하지 않는다. 다만 문자열 값이 실제로 유효한지는 별도 검증이 필요하다.
+`isLoading`, `hasError`, `isRequired`를 따로 두면 "로딩 중이면서 차단" 같은 불가능한 조합이 생긴다. 하나의 합 타입으로 두면 화면이 받을 수 있는 상태가 4개로 고정된다.
 
-## 원격 응답은 경계에서 검증하기
+## 구현 2: 모든 실패를 이유가 붙은 결과로 바꾼다
 
-TypeScript 타입 선언만으로 네트워크 응답을 검증할 수는 없다. `response.json() as VersionPolicy`를 써도 실제 데이터는 검사되지 않는다. 응답을 사용하기 전에 다음 type guard로 값을 확인한다.
+정책 조회는 예외를 밖으로 던지지 않는다. timeout, 연결 실패, HTTP 오류, 형식 오류를 각각의 이유로 바꿔 돌려준다. 응답 형식 검증(`isVersionPolicy`)은 부록에 있다.
+
+```typescript
+async function loadPolicy(
+  endpoint: string,
+  timeoutMs: number,
+): Promise<PolicyResult> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+      return { ok: false, reason: 'http' };
+    }
+
+    const payload: unknown = await response.json();
+    if (!isVersionPolicy(payload)) {
+      return { ok: false, reason: 'invalid-payload' };
+    }
+
+    return { ok: true, policy: payload };
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return { ok: false, reason: 'timeout' };
+    }
+    if (error instanceof SyntaxError) {
+      return { ok: false, reason: 'invalid-payload' };
+    }
+    return { ok: false, reason: 'network' };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+```
+
+timeout 상한이 없으면 스플래시가 `checking`에 머문다. 제한 시간이 지나면 요청을 취소하고 `timeout`으로 판정해 진입 여부를 바로 결정한다.
+
+## 구현 3: 차단 결정은 순수 함수 하나에 둔다
+
+```typescript
+function parseVersion(version: string): [number, number, number] | null {
+  if (!versionPattern.test(version)) return null;
+
+  const parts = version.split('.').map(Number);
+  if (parts.some((part) => !Number.isSafeInteger(part))) return null;
+
+  return [parts[0], parts[1], parts[2]];
+}
+
+function compareVersions(left: string, right: string): number | null {
+  const a = parseVersion(left);
+  const b = parseVersion(right);
+  if (!a || !b) return null;
+
+  for (let index = 0; index < a.length; index += 1) {
+    if (a[index] !== b[index]) return a[index] - b[index];
+  }
+  return 0;
+}
+
+function decideGate(
+  currentVersion: string,
+  platform: Platform,
+  result: PolicyResult,
+): GateState {
+  if (!result.ok) {
+    return {
+      kind: 'open',
+      mode: 'fail-open',
+      reason: result.reason,
+    };
+  }
+
+  const minimumVersion = result.policy.minimumVersion[platform];
+  const comparison = compareVersions(currentVersion, minimumVersion);
+
+  if (comparison === null) {
+    return {
+      kind: 'open',
+      mode: 'fail-open',
+      reason: 'invalid-payload',
+    };
+  }
+
+  if (comparison >= 0) {
+    return { kind: 'open', mode: 'normal' };
+  }
+
+  return {
+    kind: 'blocked',
+    minimumVersion,
+    storeURL: result.policy.storeURL[platform],
+  };
+}
+```
+
+네트워크와 React 생명주기에서 떼어 놓았기 때문에 정책 전체를 입력 표 하나로 테스트할 수 있다. 비교할 수 없는 버전도 차단하지 않고 fail-open으로 보낸다. 앱 자신의 버전 형식은 빌드 단계에서 검사해 잘못된 값이 배포되지 않게 한다.
+
+## 구현 4: 시작 순서를 고정한다
+
+시작 흐름은 스플래시 → 정책 조회(timeout 상한) → 판정 → 권한 요청 → 홈 순서로 고정했다. 권한 요청을 판정 뒤로 옮긴 이유는 차단될 버전에서 위치·알림 권한을 먼저 묻지 않기 위해서다.
+
+```tsx
+function AppGate({ state }: { state: GateState }) {
+  switch (state.kind) {
+    case 'checking':
+      return <LaunchScreen />;
+
+    case 'blocked':
+      return (
+        <RequiredUpdateScreen
+          minimumVersion={state.minimumVersion}
+          onPressUpdate={() => openExternalURL(state.storeURL)}
+        />
+      );
+
+    case 'open':
+      return <AppNavigator />;
+  }
+}
+```
+
+`fail-open` 상태는 오류 화면 없이 앱으로 들어간다. 대신 실패 이유, 플랫폼, 앱 버전을 이벤트로 남긴다. 토큰, 사용자 식별 정보, 내부 endpoint는 남기지 않는다.
+
+## 결과
+
+- 2026년 5월 28일 iOS·Android 정식 출시. 출시 직후 제보전화 번호 매핑 오류를 찾아 패치했고, 이 게이트로 강제 업데이트를 걸어 구버전 사용자를 패치 버전으로 옮겼다.
+- 2026년 9월 말 활성 사용자의 98% 이상이 최신 버전을 사용했다(Android 98.5%, iOS 100%, 스토어·Firebase 콘솔 조회값).
+- 정책 서버 장애가 실제로 몇 번 있었는지는 측정하지 않았다. fail-open의 효과는 장애가 났을 때 진입 장애로 번지지 않게 하는 설계 의도다.
+
+## 테스트
+
+판정 함수는 상태 전이 표로 고정한다. 아래는 Vitest 예제다.
+
+```typescript
+import { describe, expect, it } from 'vitest';
+
+const policy: VersionPolicy = {
+  minimumVersion: {
+    ios: '2.4.0',
+    android: '3.1.0',
+  },
+  storeURL: {
+    ios: 'https://apps.apple.com/app/id1234567890',
+    android: 'https://play.google.com/store/apps/details?id=com.example.app',
+  },
+};
+
+describe('decideGate', () => {
+  it('opens normally when the current version meets the policy', () => {
+    expect(decideGate('2.4.0', 'ios', { ok: true, policy })).toEqual({
+      kind: 'open',
+      mode: 'normal',
+    });
+  });
+
+  it('blocks only an older version with a confirmed policy', () => {
+    expect(decideGate('2.3.9', 'ios', { ok: true, policy })).toEqual({
+      kind: 'blocked',
+      minimumVersion: '2.4.0',
+      storeURL: 'https://apps.apple.com/app/id1234567890',
+    });
+  });
+
+  it.each(['timeout', 'network', 'http', 'invalid-payload'] as const)(
+    'fails open on %s',
+    (reason) => {
+      expect(decideGate('2.3.9', 'ios', { ok: false, reason })).toEqual({
+        kind: 'open',
+        mode: 'fail-open',
+        reason,
+      });
+    },
+  );
+});
+```
+
+E2E에서는 실제 스토어를 열지 않고 외부 URL opener를 주입해 다음 경로를 고정한다.
+
+1. 정책 서버가 응답하지 않아도 제한 시간 뒤 홈으로 들어간다.
+2. 현재 버전이 최소 버전과 같으면 홈으로 들어간다.
+3. 현재 버전이 낮고 정책이 유효할 때만 업데이트 화면에 머문다.
+4. 스토어 열기에 실패해도 다시 시도할 수 있다.
+
+## 의견: 언제 이 방법을 쓰지 말아야 하는가
+
+- **보안 패치를 반드시 강제해야 할 때.** 예를 들어 알려진 취약점이 있는 버전이 결제나 본인인증을 처리한다면 fail-closed가 맞다. 이때는 차단 화면에 고객센터·재시도 경로를 함께 둔다.
+- **정책 서버가 앱 API와 같은 장애 범위에 있을 때.** 정책 서버만 따로 죽는 일이 드물다면 fail-open의 이득도 작다. 정책은 CDN 같은 정적 경로에 두는 편이 낫다.
+- **다시 한다면** 마지막 성공 정책을 짧은 수명으로 캐시해, "정책 확인 실패 + 캐시상 차단 대상"을 별도 상태로 다루겠다. 그리고 fail-open 비율을 대시보드에 올려 정책 서버 장애를 사용자 신고 전에 알 수 있게 하겠다.
+
+## 부록: 원격 응답과 스토어 URL 검증
+
+TypeScript 타입은 네트워크 응답을 검증하지 않는다. 스토어 URL은 외부 앱 열기로 이어지므로 플랫폼별 공식 host와 path 형식만 허용한다. `https://` 접두사 검사만으로는 파싱 실패 문자열, 계정 정보가 들어간 URL, 공식 스토어처럼 보이는 다른 host를 막지 못한다.
 
 ```typescript
 const versionPattern = /^\d+\.\d+\.\d+$/;
@@ -140,191 +380,9 @@ function isVersionPolicy(value: unknown): value is VersionPolicy {
 }
 ```
 
-`https://` 접두사만 보는 검사는 URL 유효성을 보장하지 않는다. 파싱에 실패하는 문자열, 사용자명과 비밀번호가 들어간 URL, 공식 스토어처럼 보이는 다른 host를 모두 거부해야 한다. 강제 업데이트처럼 원격 값이 외부 앱 열기로 이어지는 경로에서는 플랫폼별 공식 host와 path 형식까지 허용 목록으로 제한하는 편이 안전하다.
-
-예제는 버전을 `major.minor.patch`의 세 숫자로 표기한다고 가정한다. prerelease, build metadata, 네 자리 버전까지 지원해야 한다면 해당 형식을 처리하는 semver 라이브러리나 별도 비교기가 필요하다. 이 예제에서 비교할 수 없는 버전은 오류로 분류하고 앱 진입을 허용한다.
-
-## 타임아웃과 취소를 확인 결과로 바꾸기
-
-정책 조회 주소인 `endpoint`와 제한 시간은 호출자가 전달한다.
+검증 테스트는 정상 URL과 함께 깨진 URL, 계정 정보가 든 URL, 비슷한 host를 넣는다.
 
 ```typescript
-async function loadPolicy(
-  endpoint: string,
-  timeoutMs: number,
-): Promise<PolicyResult> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(endpoint, {
-      method: 'GET',
-      signal: controller.signal,
-      headers: { Accept: 'application/json' },
-    });
-
-    if (!response.ok) {
-      return { ok: false, reason: 'http' };
-    }
-
-    const payload: unknown = await response.json();
-    if (!isVersionPolicy(payload)) {
-      return { ok: false, reason: 'invalid-payload' };
-    }
-
-    return { ok: true, policy: payload };
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      return { ok: false, reason: 'timeout' };
-    }
-    if (error instanceof SyntaxError) {
-      return { ok: false, reason: 'invalid-payload' };
-    }
-    return { ok: false, reason: 'network' };
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-```
-
-응답을 계속 기다리면 화면도 `checking`에 머무른다. 제한 시간이 지나면 요청을 취소하고 실패 결과를 반환해 앱 진입 여부를 결정하도록 한다.
-
-위 코드에는 앱의 백그라운드 전환이나 컴포넌트 해제에 따른 취소가 없다. 이때도 요청을 취소해야 한다면 외부 `AbortSignal`을 받아 타임아웃과 함께 처리하거나, 정책 로더에 `cancel()`을 추가할 수 있다.
-
-## 결정 로직은 순수 함수로 분리하기
-
-원격 요청, 버전 비교, 화면 전환을 한 hook 안에 넣으면 테스트가 네트워크와 React 생명주기에 묶인다. 차단 결정을 순수 함수로 만들면 정책의 핵심을 작은 입력 표로 검증할 수 있다.
-
-```typescript
-function parseVersion(version: string): [number, number, number] | null {
-  if (!versionPattern.test(version)) return null;
-
-  const parts = version.split('.').map(Number);
-  if (parts.some((part) => !Number.isSafeInteger(part))) return null;
-
-  return [parts[0], parts[1], parts[2]];
-}
-
-function compareVersions(left: string, right: string): number | null {
-  const a = parseVersion(left);
-  const b = parseVersion(right);
-  if (!a || !b) return null;
-
-  for (let index = 0; index < a.length; index += 1) {
-    if (a[index] !== b[index]) return a[index] - b[index];
-  }
-  return 0;
-}
-
-function decideGate(
-  currentVersion: string,
-  platform: Platform,
-  result: PolicyResult,
-): GateState {
-  if (!result.ok) {
-    return {
-      kind: 'open',
-      mode: 'fail-open',
-      reason: result.reason,
-    };
-  }
-
-  const minimumVersion = result.policy.minimumVersion[platform];
-  const comparison = compareVersions(currentVersion, minimumVersion);
-
-  if (comparison === null) {
-    return {
-      kind: 'open',
-      mode: 'fail-open',
-      reason: 'invalid-payload',
-    };
-  }
-
-  if (comparison >= 0) {
-    return { kind: 'open', mode: 'normal' };
-  }
-
-  return {
-    kind: 'blocked',
-    minimumVersion,
-    storeURL: result.policy.storeURL[platform],
-  };
-}
-```
-
-여기서는 차단을 만드는 경로가 하나뿐이다. 유효한 정책이 있고, 현재 버전과 최소 버전을 비교할 수 있으며, 현재 버전이 실제로 낮을 때만 `blocked`가 된다.
-
-현재 앱의 버전 형식이 잘못된 경우도 이 예제에서는 fail-open으로 처리한다. 앱 버전은 빌드 단계에서 형식을 검사해 잘못된 값이 배포되지 않도록 하는 편이 좋다.
-
-## 상태에 따라 화면을 나누기
-
-React Native 화면은 `GateState`를 기준으로 단순하게 나뉠 수 있다.
-
-```tsx
-function AppGate({ state }: { state: GateState }) {
-  switch (state.kind) {
-    case 'checking':
-      return <LaunchScreen />;
-
-    case 'blocked':
-      return (
-        <RequiredUpdateScreen
-          minimumVersion={state.minimumVersion}
-          onPressUpdate={() => openExternalURL(state.storeURL)}
-        />
-      );
-
-    case 'open':
-      return <AppNavigator />;
-  }
-}
-```
-
-`fail-open`에서도 별도 오류 화면 없이 앱으로 진입할 수 있다. 조회 실패를 추적하려면 이벤트에 `reason`, 플랫폼, 앱 버전, 요청 결과의 종류를 남긴다. 토큰, 사용자 식별 정보, 내부 endpoint는 기록하지 않는다.
-
-스토어 열기 역시 실패할 수 있다. `Linking.canOpenURL`과 `Linking.openURL`의 실패를 처리하고, 사용자가 다시 시도하거나 URL을 복사할 수 있는 대체 경로를 제공한다. “업데이트 필요” 상태를 정확히 계산하는 것과 “스토어 앱을 열 수 있음”은 서로 다른 상태다.
-
-## 캐시된 정책으로 언제까지 차단할 것인가
-
-마지막으로 성공한 정책을 로컬에 저장하면 일시적 장애 중에도 판단할 수 있다. 하지만 오래된 캐시가 새 최소 버전을 모르거나, 반대로 이미 완화된 차단을 계속 유지할 수 있다.
-
-캐시를 쓴다면 다음 필드를 함께 저장한다.
-
-```typescript
-type CachedPolicy = {
-  policy: VersionPolicy;
-  fetchedAt: string;
-  policyVersion: number;
-};
-```
-
-캐시를 적용하기 전에 다음 항목을 정한다.
-
-- 캐시 최대 수명은 얼마인가?
-- 만료된 캐시는 fail-open 참고 정보인가, 차단 근거인가?
-- 서버 정책과 로컬 캐시 중 어느 쪽이 우선하는가?
-- 기기 시간이 잘못된 경우 만료를 어떻게 판단하는가?
-
-저장된 정책이 있다는 이유만으로 계속 차단하면 이미 해제된 제한이 남을 수 있다. 차단 근거로 사용할 수 있는 캐시의 유효 기간을 정해야 한다.
-
-## 테스트: 입력별 앱 진입 여부 확인하기
-
-먼저 `decideGate`에 버전과 조회 결과를 전달해 반환 상태를 확인한다. 아래는 Vitest로 작성한 예제다.
-
-```typescript
-import { describe, expect, it } from 'vitest';
-
-const policy: VersionPolicy = {
-  minimumVersion: {
-    ios: '2.4.0',
-    android: '3.1.0',
-  },
-  storeURL: {
-    ios: 'https://apps.apple.com/app/id1234567890',
-    android: 'https://play.google.com/store/apps/details?id=com.example.app',
-  },
-};
-
 describe('isAllowedStoreURL', () => {
   it('accepts only the platform store destination shape', () => {
     expect(
@@ -347,60 +405,8 @@ describe('isAllowedStoreURL', () => {
     expect(isAllowedStoreURL(value, 'ios')).toBe(false);
   });
 });
-
-describe('decideGate', () => {
-  it('opens normally when the current version meets the policy', () => {
-    expect(decideGate('2.4.0', 'ios', { ok: true, policy })).toEqual({
-      kind: 'open',
-      mode: 'normal',
-    });
-  });
-
-  it('blocks only an older version with a confirmed policy', () => {
-    expect(decideGate('2.3.9', 'ios', { ok: true, policy })).toEqual({
-      kind: 'blocked',
-      minimumVersion: '2.4.0',
-      storeURL: 'https://apps.apple.com/app/id1234567890',
-    });
-  });
-
-  it.each(['timeout', 'network', 'http', 'invalid-payload'] as const)(
-    'fails open on %s',
-    (reason) => {
-      expect(decideGate('2.3.9', 'ios', { ok: false, reason })).toEqual({
-        kind: 'open',
-        mode: 'fail-open',
-        reason,
-      });
-    },
-  );
-});
 ```
 
-`loadPolicy`는 fetch를 주입하거나 mock server를 사용해 별도로 테스트한다.
+버전은 `major.minor.patch` 세 숫자라고 가정한다. prerelease나 네 자리 버전까지 다뤄야 한다면 semver 비교기가 필요하다.
 
-- timeout 시 요청을 abort하고 `timeout`을 반환하는가?
-- HTTP 오류를 JSON 파싱 전에 `http`로 분류하는가?
-- JSON 문법이 잘못됐거나, 응답 body가 객체가 아니거나 플랫폼 필드가 빠지면 `invalid-payload`인가?
-- 유효한 iOS/Android 정책을 보존하는가?
-- component가 unmount된 뒤 늦은 응답으로 상태를 갱신하지 않는가?
-
-E2E에서는 실제 스토어를 열기보다 외부 URL opener를 주입해 호출 여부를 확인한다. 다음 사용자 경로를 고정하면 회귀를 찾기 쉽다.
-
-1. 정책 서버가 응답하지 않아도 제한 시간 뒤 홈으로 진입한다.
-2. 현재 버전이 최소 버전과 같으면 홈으로 진입한다.
-3. 현재 버전이 낮고 정책이 유효할 때만 업데이트 화면이 유지된다.
-4. Android 정책은 Android URL을, iOS 정책은 iOS URL을 사용한다.
-5. 업데이트 화면에서 외부 URL 열기 실패를 복구할 수 있다.
-
-## 마무리
-
-최소 지원 버전보다 낮은 경우와 정책을 확인하지 못한 경우를 같은 Boolean으로 처리하면, 정책 서버에 연결하지 못한 사용자까지 업데이트 화면에 갇힌다. 이 예제의 처리 순서는 다음과 같다.
-
-1. 원격 응답을 런타임에서 검증한다.
-2. 정책 조회 결과와 앱 진입 화면의 상태를 분리한다.
-3. 유효한 정책의 최소 지원 버전보다 현재 버전이 낮을 때만 차단한다.
-4. 타임아웃·네트워크·파싱 실패는 이유를 남기고 fail-open한다.
-5. 결정 로직을 순수 함수로 만들고 상태 전이 표를 테스트한다.
-
-fail-open을 선택하더라도 조회 실패 이유는 남겨야 한다. 앱 진입은 허용하되 정책 조회 장애를 확인하고 대응할 수 있어야 하기 때문이다.
+같은 판단을 Swift로 옮긴 `VersionGate`는 [ios-production-patterns](https://github.com/minjunkim-dev/ios-production-patterns)에 있다.
