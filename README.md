@@ -2,6 +2,15 @@
 
 iOS 중심 모바일 엔지니어 김민준의 경력·프로젝트 소개와 한국어 기술 글을 담은 사이트입니다. Astro의 Content Collections를 사용해 정적 사이트로 빌드하며 GitHub Pages에 배포합니다.
 
+## 이 구조를 유지하는 이유
+
+- 글은 도구와 분리된 Markdown(머리말 + 본문)으로 둡니다. 생성기를 바꿔도 글을 그대로 옮길 수 있습니다.
+- 서버와 DB 없이 정적 HTML만 배포합니다. 운영할 대상과 공격받을 곳이 줄어듭니다.
+- Content Collections 스키마가 글 머리말을 검사합니다. 형식이 틀린 글은 빌드에서 실패합니다.
+- 글 속 코드를 실행해서 검증합니다. 블로그 플랫폼 대신 직접 만든 사이트를 쓰는 이유입니다. TypeScript 예제는 CI의 `npm run check`가 실행합니다. Swift 크기 계산은 CI에 없고, Swift가 있는 환경에서 `scripts/verify-swift-sizing.py`로 확인합니다.
+
+2026-10에 Hugo, Jekyll, Swift 생성기(Ignite)와 비교했습니다. Astro가 위 조건을 이미 지키므로 유지합니다.
+
 ## 구성
 
 - 홈: 소개 → 주요 프로젝트와 기여 → 경력·기술 → 기술 글
