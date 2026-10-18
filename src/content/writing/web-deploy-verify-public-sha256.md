@@ -55,7 +55,7 @@ MyD는 개인 데이터 지갑 앱이다. 앱 안의 WebView 화면, 관리자 �
 
 <figure>
 <div class="figure-scroll">
-<svg viewBox="0 0 660 300" role="img" aria-label="배포 검증 흐름: 빌드에서 manifest를 만들고, 자산·HTML·식별 파일 순서로 올리고, 캐시 무효화 완료를 기다린 뒤, 공개 URL에서 받은 파일의 SHA-256을 manifest와 비교해 모두 같을 때만 검증 기록을 남긴다" xmlns="http://www.w3.org/2000/svg" font-family="Pretendard, -apple-system, sans-serif">
+<svg viewBox="0 0 660 300" role="img" aria-label="배포 검증 흐름: 빌드에서 manifest를 만들고, 자산·HTML·식별 파일 순서로 올리고, 캐시 무효화 완료를 기다린 뒤, 공개 URL에서 받은 파일의 SHA-256을 manifest와 비교해 모두 같을 때만 검증 기록을 남긴다" xmlns="http://www.w3.org/2000/svg" font-family="'Pretendard Variable', Pretendard, -apple-system, sans-serif">
   <defs><marker id="dv-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4d4d4d"/></marker></defs>
   <rect x="20" y="24" width="160" height="62" rx="8" fill="#fafafa" stroke="#171717"/>
   <text x="100" y="50" text-anchor="middle" font-size="15" font-weight="700" fill="#171717">빌드</text>

@@ -11,7 +11,7 @@
   --line-strong: rgba(0, 0, 0, 0.16);
   --focus: #0068d6;
   --selection: #dcecff;
-  --sans: 'Geist', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --sans: 'Geist', 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --mono: 'Geist Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
   --page-width: 1120px;
   --reading-width: 720px;
@@ -867,6 +867,57 @@ main {
 
 .prose figure {
   margin: 32px 0;
+}
+
+/* 목차는 본문 오른쪽 여백이 충분한 넓은 화면에서만 보인다. */
+.article-toc {
+  display: none;
+}
+
+@media (min-width: 1240px) {
+  .article-body {
+    position: relative;
+  }
+
+  .article-toc {
+    display: block;
+    position: absolute;
+    top: 48px;
+    left: calc(100% + 40px);
+    width: 200px;
+    height: calc(100% - 48px);
+  }
+
+  .article-toc > * {
+    position: sticky;
+  }
+
+  .article-toc .mono-label {
+    top: 104px;
+    margin: 0 0 12px;
+  }
+
+  .article-toc ol {
+    top: 136px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .article-toc li + li {
+    margin-top: 10px;
+  }
+
+  .article-toc a {
+    color: var(--ink-secondary);
+    text-decoration: none;
+  }
+
+  .article-toc a:hover {
+    color: var(--ink);
+  }
 }
 
 .prose figcaption {
