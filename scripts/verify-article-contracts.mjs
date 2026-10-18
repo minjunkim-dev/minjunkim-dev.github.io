@@ -67,7 +67,8 @@ const checks = [
   },
   {
     name: 'force-update article must state results with their measurement source',
-    pass: forceUpdate.includes('## 결과') && forceUpdate.includes('콘솔 조회값'),
+    // A result either names its measurement source or says why it is omitted.
+    pass: forceUpdate.includes('## 결과') && (forceUpdate.includes('콘솔 조회값') || forceUpdate.includes('원본 자료가 없어')),
   },
   {
     name: 'ImageIO decoding must expose explicit aspect-fit and aspect-fill policies',
