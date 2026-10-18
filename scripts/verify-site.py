@@ -63,5 +63,6 @@ for required in ["MyD", "tbn교통방송", "담당 범위는 앱 내 모바일 �
     assert required in about, required
 for path in files:
     assert "실패를 설계합니다" not in path.read_text(), path
+    assert "**" not in path.read_text(), f"Unrendered bold markers: {path}"
 assert (DIST / "og-default.png").read_bytes() == (ROOT / "public/og-default.png").read_bytes()
 print(f"Site checks passed: {len(files)} HTML pages, {checked_links} internal links/assets, career scope and public-data checks.")

@@ -50,6 +50,7 @@ async function isUpdateRequired(): Promise<boolean> {
 fail-open을 골랐다. 차단은 **유효한 정책을 받았고, 현재 버전이 최소 버전보다 낮다고 확인된 경우에만** 일어난다. 네트워크·timeout·HTTP·형식 오류는 진입을 허용하되 실패 이유를 상태에 담는다.
 
 <figure>
+<div class="figure-scroll">
 <svg viewBox="0 0 680 300" role="img" aria-label="강제 업데이트 게이트 상태 전이도: checking에서 조회 실패 시 fail-open, 정책 확인 후 버전이 같거나 높으면 normal, 낮으면 blocked" xmlns="http://www.w3.org/2000/svg" font-family="Pretendard, -apple-system, sans-serif">
   <defs><marker id="fo-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4d4d4d"/></marker></defs>
   <rect x="20" y="120" width="130" height="56" rx="8" fill="#fafafa" stroke="#171717"/>
@@ -78,6 +79,7 @@ fail-open을 골랐다. 차단은 **유효한 정책을 받았고, 현재 버전
   <path d="M430,148 L516,106" fill="none" stroke="#4d4d4d" stroke-width="1.5" marker-end="url(#fo-arrow)"/>
   <text x="440" y="250" font-size="12" fill="#4d4d4d">스토어 안내에 머문다</text>
 </svg>
+</div>
 <figcaption>유효한 정책이 차단을 확인한 경우에만 스토어 안내로 간다. 권한 요청은 업데이트 판정 뒤로 옮겼다.</figcaption>
 </figure>
 
