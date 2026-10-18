@@ -10,6 +10,17 @@ const [forceUpdate, downsampling, deployVerify, readme] = await Promise.all([
   readFile(new URL('README.md', root), 'utf8'),
 ]);
 
+const { readdir } = await import('node:fs/promises');
+const articleDir = new URL('src/content/writing/', root);
+const articles = await Promise.all(
+  (await readdir(articleDir))
+    .filter((name) => name.endsWith('.md'))
+    .map(async (name) => {
+      const text = await readFile(new URL(name, articleDir), 'utf8');
+      return { name, body: text.slice(text.indexOf('---', 3) + 3) };
+    }),
+);
+
 const typeScriptBlocks = [
   ...forceUpdate.matchAll(/```typescript\n([\s\S]*?)```/g),
 ].map((match) => match[1]);
@@ -303,6 +314,15 @@ const checks = [
   {
     name: 'deploy-verification article must not expose account IDs or CDN distribution IDs',
     pass: !/\b\d{12}\b/.test(deployVerify) && !/\bE[0-9A-Z]{12,13}\b/.test(deployVerify),
+  },
+  {
+    name: 'every article must open with a three-line summary before its first section',
+    pass: articles.every(({ body }) => {
+      const summary = body.indexOf('**요약**');
+      const firstSection = body.indexOf('\n## ');
+      const bullets = body.slice(summary, firstSection).split('\n').filter((line) => line.startsWith('- '));
+      return summary > -1 && summary < firstSection && bullets.length === 3;
+    }),
   },
   {
     name: 'README must match the Node version used by the deployment workflow',

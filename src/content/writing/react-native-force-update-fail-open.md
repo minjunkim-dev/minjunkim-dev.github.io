@@ -12,6 +12,12 @@ draft: false
 featured: true
 ---
 
+**요약**
+
+- 운전 중 듣는 방송 앱에서는 정책 서버를 확인하지 못했을 때 앱을 막는 것이 가장 큰 피해다. 그래서 확인하지 못하면 연다(fail-open).
+- 정책 조회 결과와 화면 상태를 나누고, 모든 실패를 이유가 붙은 결과로 바꾸고, 차단 결정은 순수 함수 하나에 둔다.
+- 2026년 5월 28일 iOS·Android에 정식 출시했고, 9월 말 활성 사용자의 98% 이상이 최신 버전을 썼다.
+
 ## 상황
 
 tbn교통방송 앱은 13개 지역 FM 라이브 방송을 듣고 교통 정보를 제보하는 React Native 앱이다. 2025년부터 앱을 다시 만들었고 2026년 5월 28일 iOS·Android에 정식 출시했다. 사용자는 주로 운전 중에 앱을 연다. 앱이 열리지 않으면 방송을 듣지 못하고, 운전 중에 원인을 찾을 수도 없다.
@@ -51,7 +57,7 @@ fail-open을 골랐다. 차단은 **유효한 정책을 받았고, 현재 버전
 
 <figure>
 <div class="figure-scroll">
-<svg viewBox="0 0 680 300" role="img" aria-label="강제 업데이트 게이트 상태 전이도: checking에서 조회 실패 시 fail-open, 정책 확인 후 버전이 같거나 높으면 normal, 낮으면 blocked" xmlns="http://www.w3.org/2000/svg" font-family="Pretendard, -apple-system, sans-serif">
+<svg viewBox="0 0 680 300" role="img" aria-label="강제 업데이트 게이트 상태 전이도: checking에서 조회 실패 시 fail-open, 정책 확인 후 버전이 같거나 높으면 normal, 낮으면 blocked" xmlns="http://www.w3.org/2000/svg" font-family="'Pretendard Variable', Pretendard, -apple-system, sans-serif">
   <defs><marker id="fo-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4d4d4d"/></marker></defs>
   <rect x="20" y="120" width="130" height="56" rx="8" fill="#fafafa" stroke="#171717"/>
   <text x="85" y="145" text-anchor="middle" font-size="15" font-weight="700" fill="#171717">checking</text>

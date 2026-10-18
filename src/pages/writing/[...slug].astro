@@ -16,7 +16,8 @@ interface Props {
 }
 
 const { post } = Astro.props;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
+const toc = headings.filter((heading) => heading.depth === 2);
 const published = new Intl.DateTimeFormat('ko-KR', {
   year: 'numeric',
   month: 'long',
@@ -65,8 +66,18 @@ const updated = post.data.updatedAt
         </ul>
       </header>
 
-      <div class="prose">
-        <Content />
+      <div class="article-body">
+        <div class="prose">
+          <Content />
+        </div>
+        {toc.length >= 3 && (
+          <nav class="article-toc" aria-label="목차">
+            <p class="mono-label">목차</p>
+            <ol>
+              {toc.map((heading) => <li><a href={`#${heading.slug}`}>{heading.text}</a></li>)}
+            </ol>
+          </nav>
+        )}
       </div>
     </article>
 
