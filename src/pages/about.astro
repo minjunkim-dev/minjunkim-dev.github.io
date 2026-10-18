@@ -59,7 +59,7 @@ import { SITE } from '../data/site';
                 <li>Flutter 도입 후 중단된 iOS CI/CD를 Dev·Stag·Prod 분리 구조로 재구축했고, 이후 Fastlane internal/candidate lane과 GitLab CI 스토어 배포로 옮겼습니다. 같은 이름의 인증서 2개로 실패하던 release 서명은 SHA-1 고정으로 해결했습니다.</li>
                 <li>데이터 거래 개편의 6개 핵심 화면과 서버 API 연동, KMC 본인인증 WebView, 건강검진·금융 데이터 연동을 구현했습니다. 2026년 5월 홈·온보딩 리뉴얼을 iOS·Android에 동시 출시했습니다.</li>
               </ul>
-              <p class="timeline-description">출석 광고 상태를 4개 Bool(16가지 조합)에서 enum 상태 머신으로 바꾸는 설계안을 제안했습니다. 기획에 없는 조합이 버그로 이어지는 문제를 막고 iOS·Android의 상태 정의와 테스트 기준을 맞췄습니다.</p>
+              <p class="timeline-description">출석 광고 상태를 4개 Bool(16가지 조합)에서 상태·액션·효과를 나눈 enum 상태 머신으로 설계하고 iOS에 구현해 운영 앱에 반영했습니다. 설계안으로 iOS·Android의 상태 정의와 테스트 기준을 맞췄습니다.</p>
               <p><a class="section-link" href="https://apps.apple.com/kr/app/id1576612543" target="_blank" rel="noopener noreferrer">MyD App Store <span aria-hidden="true">↗</span></a></p>
             </div>
           </li>
@@ -78,16 +78,17 @@ import { SITE } from '../data/site';
             </div>
           </li>
           <li class="timeline-item">
-            <div class="timeline-period">2024.11 — 2025.09</div>
+            <div class="timeline-period">2024.11 — 2025.11</div>
             <div class="timeline-content">
               <h3 id="mobile-id">장병체감형 원스톱 서비스 플랫폼 구축사업</h3>
               <p class="timeline-role">국방부 장병e음 앱 내 모바일 신분증 솔루션 · iOS 모듈 통합·기능 개발 · Android 기능 단위 보완</p>
               <ul class="timeline-description">
                 <li>Swift·SwiftUI 기반 iOS 앱에 모바일 신분증 모듈을 통합했습니다. 사진 등록, DID 생성, nonce 서명, 신분증 발급, VC 메타데이터 등록, 토큰 갱신 흐름을 구현했습니다.</li>
-                <li>온라인 검증을 초기 구현하고 WebSocket 전환 이후 환경 분기·timeout·결과 화면을 보완했습니다. 오프라인 검증에는 Groth16 proof와 QR 검증을 연계했습니다.</li>
+                <li>온라인 검증을 SSE에서 WebSocket으로 전환해 구현하고, 검증 대기 timeout을 30초에서 15초로 줄였습니다. 오프라인 검증에는 Groth16 proof와 QR 검증을 연계해 App Store 공개 앱에 반영했습니다.</li>
+                <li>QR이 30초마다 갱신될 때 진행 중 검증이 끊기는 원인을 WebSocket 단일 세션 구조에서 찾았습니다. 거래별 멀티 세션으로 바꾸고, 만료 연결은 45초(QR 30초 + 검증 15초)에 정리했습니다.</li>
                 <li>앱 잠금·생체인증, 화면 캡처 방지, 무효화·재발급을 구현하고 보안 SDK(NFilter·ORA-X)를 통합했습니다. 다차수 취약점 점검(CWE)의 대응 코드를 반영했습니다.</li>
               </ul>
-              <p class="timeline-description">담당 범위는 앱 내 모바일 신분증 솔루션입니다. WebSocket 전환과 Android 핵심 신분증 흐름은 다른 개발자와 공동 구현했습니다.</p>
+              <p class="timeline-description">담당 범위는 앱 내 모바일 신분증 솔루션입니다. Android 핵심 신분증 흐름은 다른 개발자와 공동 구현했습니다.</p>
               <p><a class="section-link" href="https://apps.apple.com/kr/app/id6744992032" target="_blank" rel="noopener noreferrer">장병e음 App Store <span aria-hidden="true">↗</span></a></p>
             </div>
           </li>
