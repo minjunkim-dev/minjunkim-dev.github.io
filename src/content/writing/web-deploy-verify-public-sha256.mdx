@@ -18,7 +18,7 @@ import release from '../../../examples/web-deploy-verify-public-sha256/release.t
 
 - 업로드가 끝나고 HTTP 200이 와도, 사용자가 이전 화면을 받을 수 있었다. CDN 캐시와 SPA 대체 응답 때문이다.
 - 성공 기준을 "사용자가 받는 파일이 빌드한 파일과 같다"로 바꿨다. 공개 URL에서 받은 HTML·JS·CSS의 SHA-256을 빌드 때 만든 manifest와 비교한다.
-- 공개 URL 3개의 응답 9개가 manifest와 일치했고, 운영 검증 전용 실행 3회 뒤 실제 운영 배포에 적용했다.
+- 개발 환경에서 서버 파일과 공개 HTML·진입 JS·CSS 응답이 manifest와 일치했고, 운영은 검증 전용 실행 3회 뒤 GitLab 이전 때 운영 배포에 적용했다.
 
 ## 상황
 
@@ -146,8 +146,8 @@ verify와 deploy는 각각 빌드하므로 두 빌드가 바이트 단위로 같
 
 | 단계 | 결과 | 측정 조건 |
 |---|---|---|
-| 개발 환경 | 3개 Job 수동 배포 성공. 서버의 배포 파일 484개 해시 일치 | 개발 서버의 파일 전체를 manifest와 대조 |
-| 공개 응답 | 3개 URL의 HTML·JS·CSS 응답 9개가 manifest와 일치 | 공개 URL에서 받은 본문의 SHA-256 |
+| 개발 환경 | 3개 Job 수동 배포 성공. 서버의 배포 파일 해시 일치 | 개발 서버의 파일 전체를 manifest와 대조 |
+| 공개 응답 | 3개 URL의 HTML·진입 JS·CSS 응답이 manifest와 일치(개발 환경) | 공개 URL에서 받은 본문의 SHA-256 |
 | 운영 | 검증 전용 실행 3회 성공 뒤 실제 운영 배포에 적용 | verify 실행은 운영 저장소를 바꾸지 않음 |
 | 이전 | 같은 기준을 GitLab CI의 배포·검증 job으로 옮김 | 운영 job은 수동 실행 |
 
