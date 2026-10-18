@@ -31,6 +31,12 @@ const cases: Array<[unknown, Platform, boolean]> = [
   ['https://user:secret@apps.apple.com/app/id1234567890', 'ios', false],
   ['https://apps.apple.com.evil.example/app/id1234567890', 'ios', false],
   ['https://apps.apple.com/kr/app/example/id1234567890', 'android', false],
+  ['https://apps.apple.com:8443/app/id1234567890', 'ios', false],
+  ['https://play.google.com/store/apps/details?hl=ko', 'android', false],
+  // Garbage must return false, not throw (React Native's URL getters throw).
+  [42, 'ios', false],
+  ['https://apps.apple.com/%E0%A4%A/id1', 'android', false],
+  ['\u0000https://apps.apple.com/app/id1234567890', 'ios', false],
 ];
 for (const [value, platform, expected] of cases) {
   if (isAllowedStoreURL(value, platform) !== expected) {
@@ -108,7 +114,8 @@ const gateCases = [
   ['1.9.9', { ok: true, policy }, { kind: 'blocked', minimumVersion: '2.0.0', storeURL: policy.storeURL.ios }],
   ['1.9.9', { ok: false, reason: 'timeout' }, { kind: 'open', mode: 'fail-open', reason: 'timeout' }],
   ['1.9.9', { ok: false, reason: 'network' }, { kind: 'open', mode: 'fail-open', reason: 'network' }],
-  ['bad', { ok: true, policy }, { kind: 'open', mode: 'fail-open', reason: 'invalid-payload' }],
+  ['bad', { ok: true, policy }, { kind: 'open', mode: 'fail-open', reason: 'invalid-app-version' }],
+  ['1.9.9', { ok: true, policy: { ...policy, minimumVersion: { ios: '99999999999999999.0.0', android: '2.0.0' } } }, { kind: 'open', mode: 'fail-open', reason: 'invalid-payload' }],
 ];
 for (const [version, result, expected] of gateCases) {
   const actual = decide(version, 'ios', result);
@@ -120,17 +127,17 @@ console.log(`Gate decision runtime checks passed (${gateCases.length} cases).`);
 
 const checks = [
   {
-    name: 'store URL validation must parse the URL instead of trusting an HTTPS prefix',
+    // React Native 0.79's built-in URL getters throw, so the guard must not depend on URL.
+    name: 'store URL validation must parse with an anchored HTTPS pattern, not URL or a prefix check',
     pass:
-      !forceUpdate.includes("value.startsWith('https://')") &&
-      /new URL\(value\)/.test(forceUpdate) &&
-      /url\.protocol\s*(?:===|!==)\s*['"]https:['"]/.test(forceUpdate),
+      Boolean(storeURLGuard) &&
+      !storeURLGuard.includes("value.startsWith('https://')") &&
+      !/new URL\(/.test(storeURLGuard) &&
+      storeURLGuard.includes('/^https:\\/\\/('),
   },
   {
-    name: 'store URL validation must reject credentials',
-    pass:
-      /url\.username\s*(?:===|!==)\s*['"]{2}/.test(forceUpdate) &&
-      /url\.password\s*(?:===|!==)\s*['"]{2}/.test(forceUpdate),
+    name: 'store URL validation must explain why it avoids URL in React Native',
+    pass: forceUpdate.includes('React Native 0.79의 내장 `URL`'),
   },
   {
     name: 'store URL validation must allowlist the official platform hosts',

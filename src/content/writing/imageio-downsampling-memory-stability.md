@@ -28,7 +28,7 @@ let image = UIImage(data: data)
 let thumbnail = image?.preparingThumbnail(of: targetSize)
 ```
 
-이 경로에서는 압축 데이터와 디코딩된 원본, 축소 결과가 한 시점에 함께 살아 있을 수 있다. `Data(contentsOf:)`가 입력 전체를 메모리에 올리고, `UIImage`가 실제 그리기 시점까지 디코딩을 미루면 문제가 드러나는 위치도 호출 지점에서 멀어진다.
+이 경로에서는 압축 데이터와 디코딩된 원본, 축소 결과가 한 시점에 함께 살아 있을 수 있다. `Data(contentsOf:)`가 입력 전체를 메모리에 올리고, `preparingThumbnail(of:)`는 호출한 자리에서 동기로 디코딩한다. `UIImage`를 그대로 그리는 경로라면 디코딩이 그리기 시점으로 미뤄져, 문제가 드러나는 위치도 호출 지점에서 멀어진다.
 
 ImageIO를 쓰면 다음 두 단계를 분리할 수 있다.
 
@@ -138,7 +138,8 @@ struct ThumbnailDecoder {
             sourcePixelSize.width,
             sourcePixelSize.height
         )
-        let roundedEdge = ceil(longestSourceEdge * downscaleRatio)
+        // 부동소수점 오차(예: 320.00000000000006)로 1px 커지지 않게 아주 작은 값을 뺀다.
+        let roundedEdge = ceil(longestSourceEdge * downscaleRatio - 0.000_001)
         guard let pixels = Int(exactly: roundedEdge) else {
             throw DecodeError.invalidTargetSize
         }
@@ -175,7 +176,7 @@ struct ThumbnailDecoder {
 
 각 옵션의 역할은 다음과 같다.
 
-- `kCGImageSourceShouldCache: false`: 소스를 만들 때 원본 전체를 즉시 디코딩하지 않는다.
+- `kCGImageSourceShouldCache: false`: 디코딩한 원본 이미지를 캐시에 두지 않는다.
 - `kCGImageSourceCreateThumbnailFromImageAlways: true`: 내장 썸네일 유무와 관계없이 지정 크기의 결과를 만든다.
 - `kCGImageSourceCreateThumbnailWithTransform: true`: EXIF 방향 정보를 썸네일에 반영한다.
 - `kCGImageSourceShouldCacheImmediately: true`: 썸네일 디코딩을 함수 안에서 끝낸다. 그래서 그리기 시점의 비용을 예측하기 쉽다.
@@ -236,6 +237,7 @@ actor DecodeLimiter {
 
     func release() {
         if waiters.isEmpty {
+            precondition(running > 0, "release() without acquire()")
             running -= 1
         } else {
             waiters.removeFirst().resume()
@@ -244,7 +246,7 @@ actor DecodeLimiter {
 }
 ```
 
-이 예제는 최소 구현이다. 제품 코드라면 취소된 waiter 제거, 우선순위, 공정성도 정해야 한다. 쓰고 있는 이미지 로더가 동시성 제한과 취소를 이미 제공하면 제한기를 따로 만들지 않고 그 계층에 정책을 모은다.
+`acquire()`와 `release()`는 반드시 짝을 맞춘다. `acquire()` 직후 `defer`로 `release()`를 예약하면 오류가 나도 짝이 맞는다. 이 예제는 최소 구현이다. 제품 코드라면 취소된 waiter 제거, 우선순위, 공정성도 정해야 한다. 쓰고 있는 이미지 로더가 동시성 제한과 취소를 이미 제공하면 제한기를 따로 만들지 않고 그 계층에 정책을 모은다.
 
 리스트 셀이 재사용될 때는 이전 요청을 취소하고, 완료 시 현재 셀이 같은 이미지 식별자를 여전히 가리키는지 확인한다. 다운샘플링으로 메모리 비용은 줄지만, 결과가 엉뚱한 셀에 나타나는 순서 문제는 따로 막아야 한다.
 
@@ -307,9 +309,9 @@ final class ThumbnailDecoderTests: XCTestCase {
             contentMode: .aspectFit
         )
         let cgImage = try XCTUnwrap(image.cgImage)
-        let longestPixel = max(cgImage.width, cgImage.height)
 
-        XCTAssertLessThanOrEqual(longestPixel, 320)
+        XCTAssertLessThanOrEqual(cgImage.width, 320)
+        XCTAssertLessThanOrEqual(cgImage.height, 180)
     }
 
     func testAspectFillPreservesCropPixelBudget() throws {
