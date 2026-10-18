@@ -14,6 +14,7 @@ featured: true
 
 import Snippet from '../../components/Snippet.astro';
 import coordinator from '../../../examples/ios-startup-idempotent-initialization/Sources/Startup/StartupCoordinator.swift?raw';
+import recoverable from '../../../examples/ios-startup-idempotent-initialization/Sources/Startup/RecoverableStartupCoordinator.swift?raw';
 import articleTests from '../../../examples/ios-startup-idempotent-initialization/Tests/StartupTests/ArticleTests.swift?raw';
 
 **요약**
@@ -76,16 +77,9 @@ final class AppBootstrapper {
 
 ## 실패 뒤에 어떤 상태로 돌아갈 것인가
 
-예제는 모든 오류에서 `.idle`로 돌아간다. 그래서 다음 호출이 재시도할 수 있다. 하지만 설정 파일 손상처럼 재시도로 해결되지 않는 오류에는 별도의 종료 상태가 필요하다.
+예제는 모든 오류에서 `.idle`로 돌아간다. 그래서 다음 호출이 재시도할 수 있다. 하지만 설정 파일 손상처럼 재시도로 해결되지 않는 오류에는 별도의 종료 상태가 필요하다. 같은 폴더의 `RecoverableStartupCoordinator`는 영구 실패를 판정하는 분류기와 `failed` 상태를 더한다.
 
-```swift
-private enum State {
-    case idle
-    case running(Task<AppServices, Error>)
-    case ready(AppServices)
-    case failed(PermanentStartupError)
-}
-```
+<Snippet code={recoverable} lang="swift" region="failure-state" />
 
 오류를 구분하지 않으면 복구할 수 없는 작업을 계속 재시도하거나, 재시도하면 될 오류를 영구적으로 저장할 수 있다. 앱에 적용할 때는 다음 항목도 정해야 한다.
 

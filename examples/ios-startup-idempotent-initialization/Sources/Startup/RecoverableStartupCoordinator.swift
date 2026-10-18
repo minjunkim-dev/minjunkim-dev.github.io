@@ -11,6 +11,7 @@
 public actor RecoverableStartupCoordinator<Value: Sendable> {
     public typealias Builder = @Sendable () async throws -> Value
 
+    // snippet:start failure-state
     /// Decides whether a build error is worth retrying on the next call.
     public typealias FailureClassifier = @Sendable (any Error) -> Bool
 
@@ -20,6 +21,7 @@ public actor RecoverableStartupCoordinator<Value: Sendable> {
         case ready(Value)
         case failed(any Error)
     }
+    // snippet:end failure-state
 
     private var state: State = .idle
     private let build: Builder
