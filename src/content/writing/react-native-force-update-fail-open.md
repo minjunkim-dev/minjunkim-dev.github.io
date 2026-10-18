@@ -104,7 +104,11 @@ type PolicyResult =
 type GateState =
   | { kind: 'checking' }
   | { kind: 'open'; mode: 'normal' }
-  | { kind: 'open'; mode: 'fail-open'; reason: FailureReason }
+  | {
+      kind: 'open';
+      mode: 'fail-open';
+      reason: FailureReason | 'invalid-app-version';
+    }
   | {
       kind: 'blocked';
       minimumVersion: string;
@@ -195,6 +199,14 @@ function decideGate(
     };
   }
 
+  if (!parseVersion(currentVersion)) {
+    return {
+      kind: 'open',
+      mode: 'fail-open',
+      reason: 'invalid-app-version',
+    };
+  }
+
   const minimumVersion = result.policy.minimumVersion[platform];
   const comparison = compareVersions(currentVersion, minimumVersion);
 
@@ -218,7 +230,7 @@ function decideGate(
 }
 ```
 
-판정 함수를 네트워크와 React 생명주기에서 떼어 놓았다. 그래서 정책 전체를 입력 표 하나로 테스트할 수 있다. 비교할 수 없는 버전도 차단하지 않고 fail-open으로 보낸다. 앱 자신의 버전 형식은 빌드 단계에서 검사해 잘못된 값이 배포되지 않게 한다.
+판정 함수를 네트워크와 React 생명주기에서 떼어 놓았다. 그래서 정책 전체를 입력 표 하나로 테스트할 수 있다. 비교할 수 없는 버전도 차단하지 않고 fail-open으로 보낸다. 앱 자신의 버전이 잘못되었으면 서버 응답 오류와 구분해 `invalid-app-version`으로 남긴다. 앱 자신의 버전 형식은 빌드 단계에서 검사해 잘못된 값이 배포되지 않게 한다.
 
 ## 구현 4: 시작 순서를 고정한다
 
@@ -248,7 +260,7 @@ function AppGate({ state }: { state: GateState }) {
 
 ## 결과
 
-- 2026년 5월 28일 iOS·Android 정식 출시. 출시 직후 제보전화 번호 매핑 오류를 찾아 패치했고, 이 게이트로 강제 업데이트를 걸어 구버전 사용자를 패치 버전으로 옮겼다.
+- 2026년 5월 28일 iOS·Android 정식 출시. 출시 뒤 제보전화 번호 매핑 오류를 찾아 패치했고, 이 게이트로 강제 업데이트를 걸어 구버전 사용자를 패치 버전으로 옮겼다.
 - 2026년 9월 말 활성 사용자의 98% 이상이 최신 버전을 사용했다(Android 98.5%, iOS 100%, 스토어·Firebase 콘솔 조회값).
 - 정책 서버 장애가 실제로 몇 번 있었는지는 측정하지 않았다. fail-open은 장애가 나도 진입 장애로 번지지 않게 하려는 설계다.
 
@@ -296,6 +308,14 @@ describe('decideGate', () => {
       });
     },
   );
+
+  it('fails open on an invalid app version', () => {
+    expect(decideGate('2.4', 'ios', { ok: true, policy })).toEqual({
+      kind: 'open',
+      mode: 'fail-open',
+      reason: 'invalid-app-version',
+    });
+  });
 });
 ```
 
@@ -316,6 +336,8 @@ E2E에서는 실제 스토어를 열지 않고 외부 URL opener를 주입해 �
 
 TypeScript 타입은 네트워크 응답을 검증하지 않는다. 스토어 URL은 외부 앱 열기로 이어지므로 플랫폼별 공식 host와 path 형식만 허용한다. `https://` 접두사 검사만으로는 파싱 실패 문자열, 계정 정보가 들어간 URL, 공식 스토어처럼 보이는 다른 host를 막지 못한다.
 
+검증에는 `URL` 대신 정규식을 쓴다. 이 앱이 쓰는 React Native 0.79의 내장 `URL`은 `protocol`, `hostname` 같은 getter를 구현하지 않아 읽으면 예외를 던진다. 그 예외는 `loadPolicy`에서 `network`로 분류되어 게이트가 차단하지 못한다. Node의 `URL`은 getter를 모두 구현하므로 Node 테스트로는 이 문제를 잡지 못한다.
+
 ```typescript
 const versionPattern = /^\d+\.\d+\.\d+$/;
 
@@ -324,36 +346,32 @@ const allowedStoreHosts: Record<Platform, ReadonlySet<string>> = {
   android: new Set(['play.google.com']),
 };
 
+const storeURLPattern =
+  /^https:\/\/([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(\/[^?#]*)?(?:\?([^#]*))?(?:#.*)?$/;
+
 function isAllowedStoreURL(
   value: unknown,
   platform: Platform,
 ): value is string {
   if (typeof value !== 'string') return false;
 
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
-    return false;
-  }
+  const match = storeURLPattern.exec(value);
+  if (!match) return false;
 
-  if (
-    url.protocol !== 'https:' ||
-    url.username !== '' ||
-    url.password !== '' ||
-    url.port !== '' ||
-    !allowedStoreHosts[platform].has(url.hostname.toLowerCase())
-  ) {
-    return false;
-  }
+  const host = match[1].toLowerCase();
+  const path = match[2] ?? '';
+  const query = match[3] ?? '';
+  const isAllowedHost = Array.from(allowedStoreHosts[platform]).some(
+    (allowed) => host === allowed || host.endsWith(`.${allowed}`),
+  );
+  if (!isAllowedHost) return false;
 
   switch (platform) {
     case 'ios':
-      return /\/id\d+\/?$/.test(url.pathname);
+      return /\/id\d+\/?$/.test(path);
     case 'android':
       return (
-        url.pathname === '/store/apps/details' &&
-        Boolean(url.searchParams.get('id'))
+        path === '/store/apps/details' && /(?:^|&)id=[^&]+/.test(query)
       );
   }
 }
@@ -401,12 +419,13 @@ describe('isAllowedStoreURL', () => {
     'https://[bad',
     'https://user:secret@apps.apple.com/app/id1234567890',
     'https://apps.apple.com.evil.example/app/id1234567890',
+    'https://apps.apple.com:8443/app/id1234567890',
   ])('rejects an unsafe iOS store URL: %s', (value) => {
     expect(isAllowedStoreURL(value, 'ios')).toBe(false);
   });
 });
 ```
 
-버전은 `major.minor.patch` 세 숫자라고 가정한다. prerelease나 네 자리 버전까지 다뤄야 한다면 semver 비교기가 필요하다.
+버전은 `major.minor.patch` 세 숫자라고 가정한다. prerelease까지 다뤄야 한다면 semver 비교기가 필요하다. 네 자리 버전은 semver 형식이 아니므로 별도 비교 규칙을 정해야 한다.
 
 같은 판단을 Swift로 옮긴 `VersionGate`는 [ios-production-patterns](https://github.com/minjunkim-dev/ios-production-patterns)에 있다.

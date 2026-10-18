@@ -199,6 +199,7 @@ final class AppRouter {
 Swift Testing으로 여러 호출의 반환값과 builder 실행 횟수를 확인하는 기본 예시는 다음과 같다.
 
 ```swift
+import Foundation
 import Testing
 
 actor CallCounter {

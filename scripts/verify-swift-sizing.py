@@ -14,6 +14,9 @@ let target = CGSize(width: 100, height: 100)
 let fit = try ThumbnailDecoder.maxPixelSize(sourcePixelSize: source, targetPointSize: target, scale: 2, contentMode: .aspectFit)
 let fill = try ThumbnailDecoder.maxPixelSize(sourcePixelSize: source, targetPointSize: target, scale: 2, contentMode: .aspectFill)
 precondition(fit == 200 && fill == 800)
+// 1066 * (320 / 1066) is 320.00000000000006 in Double; the result must stay 320.
+let edge = try ThumbnailDecoder.maxPixelSize(sourcePixelSize: CGSize(width: 1066, height: 100), targetPointSize: CGSize(width: 160, height: 90), scale: 2, contentMode: .aspectFit)
+precondition(edge == 320)
 for bad: CGFloat in [0, -1, .infinity, .nan] {
     precondition((try? ThumbnailDecoder.maxPixelSize(sourcePixelSize: source, targetPointSize: CGSize(width: bad, height: 100), scale: 2, contentMode: .aspectFit)) == nil)
     precondition((try? ThumbnailDecoder.maxPixelSize(sourcePixelSize: CGSize(width: bad, height: 100), targetPointSize: target, scale: 2, contentMode: .aspectFill)) == nil)
