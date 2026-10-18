@@ -3,9 +3,10 @@ import process from 'node:process';
 import ts from 'typescript';
 
 const root = new URL('../', import.meta.url);
-const [forceUpdate, downsampling, readme] = await Promise.all([
+const [forceUpdate, downsampling, deployVerify, readme] = await Promise.all([
   readFile(new URL('src/content/writing/react-native-force-update-fail-open.md', root), 'utf8'),
   readFile(new URL('src/content/writing/imageio-downsampling-memory-stability.md', root), 'utf8'),
+  readFile(new URL('src/content/writing/web-deploy-verify-public-sha256.md', root), 'utf8'),
   readFile(new URL('README.md', root), 'utf8'),
 ]);
 
@@ -125,6 +126,92 @@ for (const [version, result, expected] of gateCases) {
 }
 console.log(`Gate decision runtime checks passed (${gateCases.length} cases).`);
 
+// Execute the deploy-verification article: manifest, upload order, and public-response hash checks.
+const deployBlocks = [...deployVerify.matchAll(/```typescript\n([\s\S]*?)```/g)].map((match) => match[1]);
+const deployJS = ts.transpileModule(deployBlocks.join('\n'), {
+  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 },
+}).outputText;
+const AsyncFunction = (async () => {}).constructor;
+const { createManifest, uploadOrder, verifyRelease, MARKER, IMMUTABLE, NO_CACHE } = await new AsyncFunction(
+  `${deployJS}\nreturn { createManifest, uploadOrder, verifyRelease, MARKER, IMMUTABLE, NO_CACHE };`,
+)();
+{
+const enc = (s) => new TextEncoder().encode(s);
+const commit = 'a'.repeat(40);
+const html = '<!doctype html><link rel="stylesheet" href="/assets/index-AbCd1234.css"><script type="module" src="/assets/index-Ef56Gh78.js"></script><a href="https://cdn.example.org/x.js">x</a>';
+const build = new Map([
+  ['index.html', enc(html)],
+  ['assets/index-AbCd1234.css', enc('body{}')],
+  ['assets/index-Ef56Gh78.js', enc('console.log(1)')],
+  ['favicon.ico', enc('ico')],
+]);
+
+let threw = false;
+try { await createManifest('r1', 'abc', build); } catch { threw = true; }
+if (!threw) throw new Error('short commit must be rejected');
+threw = false;
+try { await createManifest('r1', commit, new Map([['../x', enc('x')], ['index.html', enc('h')]])); } catch { threw = true; }
+if (!threw) throw new Error('path traversal must be rejected');
+
+const manifest = await createManifest('r1', commit, build);
+const byPath = Object.fromEntries(manifest.files.map((f) => [f.path, f]));
+if (!byPath[MARKER]) throw new Error('marker must be added');
+if (byPath['assets/index-Ef56Gh78.js'].cacheControl !== IMMUTABLE) throw new Error('hashed js must be immutable');
+if (byPath['index.html'].cacheControl !== NO_CACHE) throw new Error('html must be no-cache');
+if (byPath['favicon.ico'].cacheControl !== NO_CACHE) throw new Error('unhashed file must be no-cache');
+
+const order = uploadOrder(manifest);
+if (order.slice(-2).join() !== ['index.html', MARKER].join()) throw new Error('html and marker go last');
+if (order.length !== manifest.files.length) throw new Error('every file is uploaded once');
+
+const served = new Map([...build, [MARKER, enc(JSON.stringify({ releaseId: 'r1', sourceCommit: commit }) + '\n')]]);
+const site = (overrides = {}) => async (input) => {
+  const url = new URL(input);
+  const path = url.pathname.replace(/^\//, '');
+  const o = overrides[path];
+  if (o === 'throw') throw new TypeError('offline');
+  if (o && o.redirect) return Object.defineProperty(new Response('x'), 'url', { value: o.redirect });
+  if (o && o.status) return new Response('', { status: o.status });
+  if (o && o.body !== undefined) return new Response(o.body);
+  if (!served.has(path)) return new Response(served.get('index.html')); // SPA fallback: 200 + index.html
+  return new Response(served.get(path));
+};
+
+const origin = 'https://web.example.com/';
+const cases = [
+  ['all good', site(), (r) => r.ok && r.checked.length === 4],
+  ['stale html from cache', site({ 'index.html': { body: '<!doctype html><script src="/assets/old-11111111.js"></script>' } }), (r) => r.failure?.kind === 'mismatch' && r.failure.path === 'index.html'],
+  ['spa fallback for asset', site({ 'assets/index-Ef56Gh78.js': { body: html } }), (r) => r.failure?.kind === 'mismatch' && r.failure.path === 'assets/index-Ef56Gh78.js'],
+  ['asset 404', site({ 'assets/index-AbCd1234.css': { status: 404 } }), (r) => r.failure?.kind === 'http' && r.failure.status === 404],
+  ['network error', site({ [MARKER]: 'throw' }), (r) => r.failure?.kind === 'network'],
+  ['redirect to another host', site({ [MARKER]: { redirect: 'https://login.example.net/' } }), (r) => r.failure?.kind === 'redirect'],
+  ['old marker', site({ [MARKER]: { body: '{"releaseId":"r0"}\n' } }), (r) => r.failure?.kind === 'mismatch' && r.failure.path === MARKER],
+];
+for (const [name, fetchStub, expect] of cases) {
+  const result = await verifyRelease(origin, manifest, fetchStub);
+  if (!expect(result)) throw new Error(`verifyRelease ${name}: ${JSON.stringify(result)}`);
+}
+
+// HTML that references a file not in the release, malformed escapes, or no JS.
+for (const [name, page, kind] of [
+  ['unknown asset', '<script src="/assets/missing-99999999.js"></script>', 'unknown-asset'],
+  ['malformed escape', '<script src="/assets/%E0%A4%A.js"></script>', 'unknown-asset'],
+  ['no js entrypoint', '<link rel="stylesheet" href="/assets/index-AbCd1234.css">', 'no-entrypoint'],
+]) {
+  const b = new Map(build).set('index.html', enc(page));
+  const m = await createManifest('r2', commit, b);
+  const s = new Map([...b, [MARKER, enc(JSON.stringify({ releaseId: 'r2', sourceCommit: commit }) + '\n')]]);
+  const stub = async (input) => {
+    const p = new URL(input).pathname.replace(/^\//, '');
+    return new Response(s.get(p) ?? s.get('index.html'));
+  };
+  const r = await verifyRelease(origin, m, stub);
+  if (r.ok || r.failure.kind !== kind) throw new Error(`verifyRelease ${name}: ${JSON.stringify(r)}`);
+}
+const deployCaseCount = cases.length + 3;
+console.log(`Deploy verification runtime checks passed (${deployCaseCount} cases).`);
+}
+
 const checks = [
   {
     // React Native 0.79's built-in URL getters throw, so the guard must not depend on URL.
@@ -197,6 +284,25 @@ const checks = [
   {
     name: 'cache key and decoder must share one content-mode type',
     pass: downsampling.includes('let contentMode: ThumbnailDecoder.ContentMode'),
+  },
+  {
+    name: 'deploy-verification article must define success before the code and compare signals',
+    pass:
+      deployVerify.includes('## 결정') &&
+      deployVerify.indexOf('## 결정') < deployVerify.indexOf('## 구현 1') &&
+      deployVerify.includes('| HTTP 200 |'),
+  },
+  {
+    name: 'deploy-verification article must include an accessible flow diagram',
+    pass: /<svg[^>]*role="img"[^>]*aria-label="[^"]+"/.test(deployVerify),
+  },
+  {
+    name: 'deploy-verification article must state results with measurement conditions and limits',
+    pass: deployVerify.includes('## 결과') && deployVerify.includes('측정 조건') && deployVerify.includes('## 의견'),
+  },
+  {
+    name: 'deploy-verification article must not expose account IDs or CDN distribution IDs',
+    pass: !/\b\d{12}\b/.test(deployVerify) && !/\bE[0-9A-Z]{12,13}\b/.test(deployVerify),
   },
   {
     name: 'README must match the Node version used by the deployment workflow',
