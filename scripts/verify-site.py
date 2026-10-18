@@ -54,6 +54,7 @@ for path, page in pages.items():
         checked_links += 1
 
 home = (DIST / "index.html").read_text()
+assert "성공 신호를 그대로 믿지 않고 확인합니다" in home
 assert home.index('id="projects-title"') < home.index('id="experience-title"') < home.index('id="featured-writing"')
 for anchor in ("myd", "tbn", "mobile-id"):
     assert f'/about/#{anchor}' in home, anchor
