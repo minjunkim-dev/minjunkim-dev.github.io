@@ -865,6 +865,16 @@ main {
   font-family: var(--mono);
 }
 
+.prose figure {
+  margin: 32px 0;
+}
+
+.prose figcaption {
+  margin-top: 12px;
+  color: var(--ink-secondary);
+  font-size: 14px;
+}
+
 .prose hr {
   height: 1px;
   margin: 64px 0;
@@ -1022,6 +1032,23 @@ main {
 }
 
 @media (max-width: 620px) {
+  /* 다이어그램을 화면 폭에 맞춰 줄이면 글자가 6pt 안팎이 된다. 최소 폭을 두고 그림만 가로 스크롤한다. */
+  .prose .figure-scroll {
+    overflow-x: auto;
+  }
+
+  .prose .figure-scroll svg {
+    min-width: 600px;
+  }
+
+  .prose .figure-scroll + figcaption::before {
+    content: "옆으로 밀면 그림 전체를 볼 수 있다.";
+    display: block;
+    margin-bottom: 4px;
+    color: var(--ink-tertiary);
+    font-size: 12px;
+  }
+
   .shell,
   .article-shell {
     width: min(calc(100% - 32px), var(--page-width));

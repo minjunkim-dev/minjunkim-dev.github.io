@@ -40,7 +40,7 @@ MyD는 개인 데이터 지갑 앱이다. 앱 안의 WebView 화면, 관리자 �
 
 ## 결정: 성공의 정의를 바꾼다
 
-성공 기준을 "명령이 끝났다"에서 **"공개 URL에서 받은 파일이 우리가 빌드한 파일과 바이트 단위로 같다"**로 바꿨다.
+성공 기준을 "명령이 끝났다"에서 "공개 URL에서 받은 파일이 우리가 빌드한 파일과 바이트 단위로 같다"로 바꿨다.
 
 다른 신호와 비교하면 이렇다.
 
@@ -54,6 +54,7 @@ MyD는 개인 데이터 지갑 앱이다. 앱 안의 WebView 화면, 관리자 �
 해시 비교는 "어떤 빌드가 나가 있는가"라는 질문에만 답한다. 그 질문에는 정확히 답한다. 기능 검증은 별도 관문으로 남긴다.
 
 <figure>
+<div class="figure-scroll">
 <svg viewBox="0 0 660 300" role="img" aria-label="배포 검증 흐름: 빌드에서 manifest를 만들고, 자산·HTML·식별 파일 순서로 올리고, 캐시 무효화 완료를 기다린 뒤, 공개 URL에서 받은 파일의 SHA-256을 manifest와 비교해 모두 같을 때만 검증 기록을 남긴다" xmlns="http://www.w3.org/2000/svg" font-family="Pretendard, -apple-system, sans-serif">
   <defs><marker id="dv-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4d4d4d"/></marker></defs>
   <rect x="20" y="24" width="160" height="62" rx="8" fill="#fafafa" stroke="#171717"/>
@@ -86,6 +87,7 @@ MyD는 개인 데이터 지갑 앱이다. 앱 안의 WebView 화면, 관리자 �
   <path d="M240,204 L164,240" fill="none" stroke="#4d4d4d" stroke-width="1.5" marker-end="url(#dv-arrow)"/>
   <text x="228" y="250" text-anchor="start" font-size="12" fill="#4d4d4d">하나라도 다름</text>
 </svg>
+</div>
 <figcaption>성공 기록은 마지막 비교를 통과해야만 남는다. 업로드와 캐시 무효화가 끝난 것은 성공이 아니라 검증을 시작할 조건이다.</figcaption>
 </figure>
 
