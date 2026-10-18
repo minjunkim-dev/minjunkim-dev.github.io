@@ -12,6 +12,11 @@ draft: false
 featured: true
 ---
 
+import Snippet from '../../components/Snippet.astro';
+import coordinator from '../../../examples/ios-startup-idempotent-initialization/Sources/Startup/StartupCoordinator.swift?raw';
+import recoverable from '../../../examples/ios-startup-idempotent-initialization/Sources/Startup/RecoverableStartupCoordinator.swift?raw';
+import articleTests from '../../../examples/ios-startup-idempotent-initialization/Tests/StartupTests/ArticleTests.swift?raw';
+
 **요약**
 
 - AppDelegate, Scene, 딥링크가 같은 초기화를 동시에 부르면 부작용이 두 번 일어나거나 반쯤 준비된 상태가 노출된다.
@@ -64,53 +69,7 @@ final class AppBootstrapper {
 
 실행 중인 `Task`를 저장하면 두 번째 호출자는 새 작업을 만들지 않고 같은 결과를 기다릴 수 있다.
 
-```swift
-import Foundation
-
-struct AppServices: Sendable, Equatable {
-    let sessionID: String?
-}
-
-actor StartupCoordinator {
-    typealias Builder = @Sendable () async throws -> AppServices
-
-    private enum State {
-        case idle
-        case running(Task<AppServices, Error>)
-        case ready(AppServices)
-    }
-
-    private var state: State = .idle
-    private let build: Builder
-
-    init(build: @escaping Builder) {
-        self.build = build
-    }
-
-    func start() async throws -> AppServices {
-        switch state {
-        case .ready(let services):
-            return services
-
-        case .running(let task):
-            return try await task.value
-
-        case .idle:
-            let task = Task { try await build() }
-            state = .running(task)
-
-            do {
-                let services = try await task.value
-                state = .ready(services)
-                return services
-            } catch {
-                state = .idle
-                throw error
-            }
-        }
-    }
-}
-```
+<Snippet code={coordinator} lang="swift" region="coordinator" />
 
 `Task`를 만들면 첫 `await`보다 먼저 `.running(task)`를 기록해야 한다. actor는 그 지점까지 원자적으로 실행한다. 이후 재진입한 호출은 `.running`을 보고 같은 Task의 값을 기다린다.
 
@@ -118,16 +77,9 @@ actor StartupCoordinator {
 
 ## 실패 뒤에 어떤 상태로 돌아갈 것인가
 
-예제는 모든 오류에서 `.idle`로 돌아간다. 그래서 다음 호출이 재시도할 수 있다. 하지만 설정 파일 손상처럼 재시도로 해결되지 않는 오류에는 별도의 종료 상태가 필요하다.
+예제는 모든 오류에서 `.idle`로 돌아간다. 그래서 다음 호출이 재시도할 수 있다. 하지만 설정 파일 손상처럼 재시도로 해결되지 않는 오류에는 별도의 종료 상태가 필요하다. 같은 폴더의 `RecoverableStartupCoordinator`는 영구 실패를 판정하는 분류기와 `failed` 상태를 더한다.
 
-```swift
-private enum State {
-    case idle
-    case running(Task<AppServices, Error>)
-    case ready(AppServices)
-    case failed(PermanentStartupError)
-}
-```
+<Snippet code={recoverable} lang="swift" region="failure-state" />
 
 오류를 구분하지 않으면 복구할 수 없는 작업을 계속 재시도하거나, 재시도하면 될 오류를 영구적으로 저장할 수 있다. 앱에 적용할 때는 다음 항목도 정해야 한다.
 
@@ -204,72 +156,13 @@ final class AppRouter {
 
 Swift Testing으로 여러 호출의 반환값과 builder 실행 횟수를 확인하는 기본 예시는 다음과 같다.
 
-```swift
-import Foundation
-import Testing
-
-actor CallCounter {
-    private(set) var value = 0
-
-    func increment() {
-        value += 1
-    }
-}
-
-@Test
-func concurrentStartsShareOneBuild() async throws {
-    let counter = CallCounter()
-    let expected = AppServices(sessionID: "fixture-session")
-
-    let coordinator = StartupCoordinator {
-        await counter.increment()
-        try await Task.sleep(for: .milliseconds(20))
-        return expected
-    }
-
-    async let first = coordinator.start()
-    async let second = coordinator.start()
-    async let third = coordinator.start()
-
-    let results = try await [first, second, third]
-
-    #expect(results == [expected, expected, expected])
-    #expect(await counter.value == 1)
-}
-```
+<Snippet code={articleTests} lang="swift" region="concurrent-test" />
 
 20ms를 기다린다고 모든 호출이 `.running` 상태에서 겹친다는 보장은 없다. 이 분기를 확실히 검사하려면 테스트용 신호로 builder 완료를 늦추고, 다른 호출자가 실행 중인 Task를 기다리는 것을 확인한 뒤 신호를 해제해야 한다.
 
 재시도는 첫 실행만 실패하는 builder로 확인할 수 있다.
 
-```swift
-actor AttemptPlan {
-    private var attempt = 0
-
-    func next() throws -> AppServices {
-        attempt += 1
-        if attempt == 1 {
-            throw URLError(.timedOut)
-        }
-        return AppServices(sessionID: nil)
-    }
-}
-
-@Test
-func transientFailureReturnsToIdle() async throws {
-    let plan = AttemptPlan()
-    let coordinator = StartupCoordinator {
-        try await plan.next()
-    }
-
-    await #expect(throws: URLError.self) {
-        try await coordinator.start()
-    }
-
-    let services = try await coordinator.start()
-    #expect(services == AppServices(sessionID: nil))
-}
-```
+<Snippet code={articleTests} lang="swift" region="retry-test" />
 
 단위 테스트만으로 실제 생명주기 결합을 모두 확인할 수는 없다. 통합 테스트에서는 다음 시나리오를 별도로 만든다.
 
@@ -291,4 +184,4 @@ func transientFailureReturnsToIdle() async throws {
 
 ---
 
-이 글의 조정기는 `StartupCoordinator`라는 이름으로 [ios-production-patterns](https://github.com/minjunkim-dev/ios-production-patterns) 패키지에 정리했다. 일시적 실패와 영구 실패를 구분하는 분류기, 로그아웃 뒤 결과를 폐기하는 `reset()`, 동시 호출·재시도·취소를 확인하는 테스트가 포함돼 있다.
+이 글의 코드와 테스트는 [examples/ios-startup-idempotent-initialization](https://github.com/minjunkim-dev/minjunkim-dev.github.io/tree/main/examples/ios-startup-idempotent-initialization)에 있고, CI가 실행한다. 같은 폴더의 `RecoverableStartupCoordinator`는 이 조정기에 일시적 실패와 영구 실패를 구분하는 분류기와 로그아웃 뒤 결과를 폐기하는 `reset()`을 더했다. 동시 호출·재시도·취소를 확인하는 테스트도 함께 있다.

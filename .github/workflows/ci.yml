@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  site:
+    name: Site and TypeScript examples
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm install --global npm@11.19.0 --ignore-scripts
+      - run: npm ci --ignore-scripts --include=dev
+      - run: npm audit --include=dev --audit-level=moderate
+      # astro check, article structure checks, and node --test for src/ and examples/
+      - run: npm run check
+      - run: npx astro build
+      - run: python3 scripts/verify-site.py
+
+  swift:
+    name: Swift examples
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: swift test (macOS packages)
+        run: |
+          for dir in examples/react-native-force-update-fail-open examples/ios-startup-idempotent-initialization; do
+            echo "::group::$dir"
+            swift test --package-path "$dir"
+            echo "::endgroup::"
+          done
+      - name: xcodebuild test (UIKit package on iOS Simulator)
+        working-directory: examples/imageio-downsampling-memory-stability
+        run: |
+          udid=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; print(next(d["udid"] for r,ds in json.load(sys.stdin)["devices"].items() if "iOS" in r for d in ds if d["name"].startswith("iPhone")))')
+          xcodebuild test -scheme Thumbnail-Package -destination "platform=iOS Simulator,id=$udid"

@@ -12,6 +12,13 @@ draft: false
 featured: false
 ---
 
+import Snippet from '../../components/Snippet.astro';
+import decoder from '../../../examples/imageio-downsampling-memory-stability/Sources/Thumbnail/ThumbnailDecoder.swift?raw';
+import dataSource from '../../../examples/imageio-downsampling-memory-stability/Sources/Thumbnail/ThumbnailDecoder+Data.swift?raw';
+import limiter from '../../../examples/imageio-downsampling-memory-stability/Sources/Thumbnail/DecodeLimiter.swift?raw';
+import cacheKey from '../../../examples/imageio-downsampling-memory-stability/Sources/Thumbnail/ThumbnailCacheKey.swift?raw';
+import decoderTests from '../../../examples/imageio-downsampling-memory-stability/Tests/ThumbnailTests/ArticleTests.swift?raw';
+
 **요약**
 
 - 9432×17328px 공지 이미지를 원본 크기로 디코딩하면 비트맵 하나가 약 653MB를 써서 앱이 강제 종료됐다.
@@ -29,7 +36,7 @@ featured: false
 | 원본 | 9432 × 17328 | 약 653MB |
 | 긴 변을 1179px(393pt × 3배율)로 제한 | 642 × 1179 | 약 3MB(계산값) |
 
-이 글의 코드는 그 수정을 공개 API로 다시 만든 예제다. 실서비스 코드를 그대로 옮기지 않았다. 다운샘플링 함수와 메모리를 확인할 테스트 항목을 정리한다.
+이 글의 코드는 그 수정을 공개 API로 다시 만든 예제다. 실서비스 코드를 그대로 옮기지 않았다. 코드와 테스트는 [examples/imageio-downsampling-memory-stability](https://github.com/minjunkim-dev/minjunkim-dev.github.io/tree/main/examples/imageio-downsampling-memory-stability)에 있고, CI가 iOS Simulator에서 실행한다. 다운샘플링 함수와 메모리를 확인할 테스트 항목을 정리한다.
 
 ## 파일 크기와 디코딩 크기를 분리해서 생각하기
 
@@ -56,140 +63,7 @@ ImageIO를 쓰면 다음 두 단계를 분리할 수 있다.
 
 UIKit의 레이아웃은 point 단위이고 ImageIO의 `kCGImageSourceThumbnailMaxPixelSize`는 pixel 단위다. 따라서 표시 크기와 화면 scale을 함께 전달해야 한다.
 
-```swift
-import ImageIO
-import UIKit
-
-struct ThumbnailDecoder {
-    enum ContentMode: String, Hashable, Sendable {
-        case aspectFit
-        case aspectFill
-    }
-
-    enum DecodeError: Error {
-        case invalidTargetSize
-        case cannotCreateSource
-        case invalidSourceDimensions
-        case cannotCreateThumbnail
-    }
-
-    static func decode(
-        from url: URL,
-        fitting pointSize: CGSize,
-        scale: CGFloat,
-        contentMode: ContentMode
-    ) throws -> UIImage {
-        let sourceOptions: [CFString: Any] = [
-            kCGImageSourceShouldCache: false
-        ]
-
-        guard let source = CGImageSourceCreateWithURL(
-            url as CFURL,
-            sourceOptions as CFDictionary
-        ) else {
-            throw DecodeError.cannotCreateSource
-        }
-
-        let sourcePixelSize = try sourcePixelSize(of: source)
-        let maxPixelSize = try maxPixelSize(
-            sourcePixelSize: sourcePixelSize,
-            targetPointSize: pointSize,
-            scale: scale,
-            contentMode: contentMode
-        )
-
-        let thumbnailOptions: [CFString: Any] = [
-            kCGImageSourceCreateThumbnailFromImageAlways: true,
-            kCGImageSourceCreateThumbnailWithTransform: true,
-            kCGImageSourceShouldCacheImmediately: true,
-            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize
-        ]
-
-        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(
-            source,
-            0,
-            thumbnailOptions as CFDictionary
-        ) else {
-            throw DecodeError.cannotCreateThumbnail
-        }
-
-        return UIImage(cgImage: cgImage, scale: scale, orientation: .up)
-    }
-
-    static func maxPixelSize(
-        sourcePixelSize: CGSize,
-        targetPointSize: CGSize,
-        scale: CGFloat,
-        contentMode: ContentMode
-    ) throws -> Int {
-        guard targetPointSize.width.isFinite, targetPointSize.width > 0,
-              targetPointSize.height.isFinite, targetPointSize.height > 0,
-              scale.isFinite, scale > 0 else {
-            throw DecodeError.invalidTargetSize
-        }
-        guard sourcePixelSize.width.isFinite, sourcePixelSize.width > 0,
-              sourcePixelSize.height.isFinite, sourcePixelSize.height > 0 else {
-            throw DecodeError.invalidSourceDimensions
-        }
-
-        let targetPixelSize = CGSize(
-            width: targetPointSize.width * scale,
-            height: targetPointSize.height * scale
-        )
-        guard targetPixelSize.width.isFinite, targetPixelSize.height.isFinite else {
-            throw DecodeError.invalidTargetSize
-        }
-        let widthRatio = targetPixelSize.width / sourcePixelSize.width
-        let heightRatio = targetPixelSize.height / sourcePixelSize.height
-        let resizeRatio: CGFloat
-
-        switch contentMode {
-        case .aspectFit:
-            resizeRatio = min(widthRatio, heightRatio)
-        case .aspectFill:
-            resizeRatio = max(widthRatio, heightRatio)
-        }
-
-        let downscaleRatio = min(resizeRatio, 1)
-        let longestSourceEdge = max(
-            sourcePixelSize.width,
-            sourcePixelSize.height
-        )
-        // 부동소수점 오차(예: 320.00000000000006)로 1px 커지지 않게 아주 작은 값을 뺀다.
-        let roundedEdge = ceil(longestSourceEdge * downscaleRatio - 0.000_001)
-        guard let pixels = Int(exactly: roundedEdge) else {
-            throw DecodeError.invalidTargetSize
-        }
-        return max(1, pixels)
-    }
-
-    private static func sourcePixelSize(
-        of source: CGImageSource
-    ) throws -> CGSize {
-        guard let properties = CGImageSourceCopyPropertiesAtIndex(
-            source,
-            0,
-            nil
-        ) as? [CFString: Any],
-        let width = (properties[kCGImagePropertyPixelWidth] as? NSNumber)?.doubleValue,
-        let height = (properties[kCGImagePropertyPixelHeight] as? NSNumber)?.doubleValue,
-        width > 0,
-        height > 0 else {
-            throw DecodeError.invalidSourceDimensions
-        }
-
-        let orientation = (
-            properties[kCGImagePropertyOrientation] as? NSNumber
-        )?.intValue ?? 1
-        let swapsAxes = [5, 6, 7, 8].contains(orientation)
-
-        return CGSize(
-            width: swapsAxes ? height : width,
-            height: swapsAxes ? width : height
-        )
-    }
-}
-```
+<Snippet code={decoder} lang="swift" region="decoder" />
 
 각 옵션의 역할은 다음과 같다.
 
@@ -205,22 +79,7 @@ struct ThumbnailDecoder {
 
 파일 URL이 이미 있으면 `CGImageSourceCreateWithURL`을 쓴다. 네트워크로 받은 `Data`만 있다면 `CGImageSourceCreateWithData`를 써도 된다. 다만 다운로드 응답과 디코딩 버퍼가 함께 남는 기간을 관리해야 한다.
 
-```swift
-static func makeSource(from data: Data) throws -> CGImageSource {
-    let sourceOptions: [CFString: Any] = [
-        kCGImageSourceShouldCache: false
-    ]
-
-    guard let source = CGImageSourceCreateWithData(
-        data as CFData,
-        sourceOptions as CFDictionary
-    ) else {
-        throw DecodeError.cannotCreateSource
-    }
-
-    return source
-}
-```
+<Snippet code={dataSource} lang="swift" region="make-source" />
 
 `Data` 입력도 지원하려면 위 디코더에서 소스 생성 이후의 썸네일 처리 부분을 별도 함수로 옮겨 공유할 수 있다. 그러면 URL과 `Data` 경로에 같은 크기 계산과 캐시 옵션을 적용할 수 있다.
 
@@ -230,38 +89,7 @@ static func makeSource(from data: Data) throws -> CGImageSource {
 
 한 장의 크기를 줄여도 여러 셀이 동시에 디코딩하면 순간 메모리 사용량이 커진다. 그래서 동시에 디코딩하는 수에도 상한을 둔다.
 
-```swift
-actor DecodeLimiter {
-    private let limit: Int
-    private var running = 0
-    private var waiters: [CheckedContinuation<Void, Never>] = []
-
-    init(limit: Int) {
-        precondition(limit > 0)
-        self.limit = limit
-    }
-
-    func acquire() async {
-        if running < limit {
-            running += 1
-            return
-        }
-
-        await withCheckedContinuation { continuation in
-            waiters.append(continuation)
-        }
-    }
-
-    func release() {
-        if waiters.isEmpty {
-            precondition(running > 0, "release() without acquire()")
-            running -= 1
-        } else {
-            waiters.removeFirst().resume()
-        }
-    }
-}
-```
+<Snippet code={limiter} lang="swift" region="limiter" />
 
 `acquire()`와 `release()`는 반드시 짝을 맞춘다. `acquire()` 직후 `defer`로 `release()`를 예약하면 오류가 나도 짝이 맞는다. 이 예제는 최소 구현이다. 제품 코드라면 취소된 waiter 제거, 우선순위, 공정성도 정해야 한다. 쓰고 있는 이미지 로더가 동시성 제한과 취소를 이미 제공하면 제한기를 따로 만들지 않고 그 계층에 정책을 모은다.
 
@@ -271,14 +99,7 @@ actor DecodeLimiter {
 
 원본 URL만 캐시 키로 쓰면 작은 목록 썸네일과 큰 상세 이미지가 같은 항목을 두고 충돌한다. 그러면 어떤 크기를 먼저 요청했느냐에 따라 나중 요청의 화질과 메모리 비용이 정해진다.
 
-```swift
-struct ThumbnailCacheKey: Hashable, Sendable {
-    let resourceID: String
-    let pixelWidth: Int
-    let pixelHeight: Int
-    let contentMode: ThumbnailDecoder.ContentMode
-}
-```
+<Snippet code={cacheKey} lang="swift" region="cache-key" />
 
 반대로 크기가 조금만 달라도 별도 항목으로 저장하면 캐시를 재사용하기 어렵다. 화면에서 쓰는 이미지 크기를 몇 단계로 묶고, 그 값을 키에 쓴다. 캐시 비용은 압축 파일 크기가 아니라 디코딩한 이미지의 메모리 사용량으로 계산한다.
 
@@ -308,43 +129,9 @@ for request in requests {
 
 ### 1. fit 결과 크기와 fill에 필요한 픽셀 수 확인
 
-```swift
-import XCTest
+<Snippet code={decoderTests} lang="swift" region="tests" />
 
-final class ThumbnailDecoderTests: XCTestCase {
-    func testDecodedImageRespectsPixelBudget() throws {
-        let fixtureURL = try XCTUnwrap(
-            Bundle.module.url(forResource: "landscape-fixture", withExtension: "jpg")
-        )
-        let pointSize = CGSize(width: 160, height: 90)
-        let scale: CGFloat = 2
-
-        let image = try ThumbnailDecoder.decode(
-            from: fixtureURL,
-            fitting: pointSize,
-            scale: scale,
-            contentMode: .aspectFit
-        )
-        let cgImage = try XCTUnwrap(image.cgImage)
-
-        XCTAssertLessThanOrEqual(cgImage.width, 320)
-        XCTAssertLessThanOrEqual(cgImage.height, 180)
-    }
-
-    func testAspectFillPreservesCropPixelBudget() throws {
-        let maxPixelSize = try ThumbnailDecoder.maxPixelSize(
-            sourcePixelSize: CGSize(width: 4_000, height: 1_000),
-            targetPointSize: CGSize(width: 100, height: 100),
-            scale: 2,
-            contentMode: .aspectFill
-        )
-
-        XCTAssertEqual(maxPixelSize, 800)
-    }
-}
-```
-
-fixture는 저장소에 넣어도 되는 공개 테스트 이미지를 쓰고, 라이선스와 생성 방법을 함께 적는다. 두 번째 테스트는 4:1 원본을 정사각형 fill 슬롯에 넣는 순수 계산이다. 짧은 축이 잘라 낼 영역을 덮는지 확인한다. 방향 메타데이터가 있는 세로 이미지 fixture도 추가해, 회전을 적용한 뒤의 폭과 높이가 예상과 같은지 확인한다.
+fixture는 저장소에 넣어도 되는 공개 테스트 이미지를 쓰고, 라이선스와 생성 방법을 함께 적는다. 이 글의 fixture는 `make-fixture.swift`로 직접 만든 1600×900 그라데이션 이미지다. 두 번째 테스트는 4:1 원본을 정사각형 fill 슬롯에 넣는 순수 계산이다. 짧은 축이 잘라 낼 영역을 덮는지 확인한다. 방향 메타데이터가 있는 세로 이미지 fixture도 추가해, 회전을 적용한 뒤의 폭과 높이가 예상과 같은지 확인한다.
 
 ### 2. 잘못된 입력과 경계 크기 확인
 

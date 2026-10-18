@@ -5,6 +5,6 @@ export const SITE = {
   author: 'MINJUN KIM',
   email: 'minjunkim.dev@gmail.com',
   github: 'https://github.com/minjunkim-dev',
-  repository: 'https://github.com/minjunkim-dev/ios-production-patterns',
+  repository: 'https://github.com/minjunkim-dev/minjunkim-dev.github.io',
   linkedin: 'https://www.linkedin.com/in/minjun-kim-bene-dev/',
 } as const;

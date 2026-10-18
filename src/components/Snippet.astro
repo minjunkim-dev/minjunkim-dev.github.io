@@ -1,0 +1,16 @@
+---
+// Shows code from a tested file in examples/, so an article never carries a copy.
+import { Code } from 'astro:components';
+import type { ComponentProps } from 'astro/types';
+import { snippet } from '../lib/snippet';
+
+interface Props {
+  code: string;
+  lang: ComponentProps<typeof Code>['lang'];
+  region?: string;
+}
+
+const { code, lang, region } = Astro.props;
+---
+
+<Code code={snippet(code, region)} lang={lang} theme="github-dark-default" wrap />
