@@ -15,3 +15,8 @@ pnpm-debug.log*
 
 .vscode/
 .idea/
+
+# SwiftPM build output in examples/
+.build/
+.swiftpm/
+Package.resolved

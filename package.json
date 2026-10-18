@@ -8,10 +8,12 @@
     "dev": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "check": "astro check && npm run test:articles",
-    "test:articles": "node scripts/verify-article-contracts.mjs"
+    "check": "astro check && npm run test:articles && npm run test:examples",
+    "test:articles": "node scripts/verify-article-contracts.mjs",
+    "test:examples": "node --test 'src/**/*.test.ts' 'examples/**/*.test.ts'"
   },
   "dependencies": {
+    "@astrojs/mdx": "8.0.2",
     "@astrojs/rss": "4.0.19",
     "@astrojs/sitemap": "3.7.3",
     "astro": "7.3.3",
