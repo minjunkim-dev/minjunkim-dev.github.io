@@ -21,7 +21,7 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
           MyD에서는 iOS 기능과 배포 환경을 맡았습니다.
           tbn교통방송 앱은 iOS·Android에 정식 출시했습니다.
           장병e음 앱에는 모바일 신분증 솔루션을 iOS 제품 코드에 통합했습니다.
-          웹 프론트 배포는 공개 URL에서 받은 파일의 SHA-256이 빌드 산출물과 같을 때만 성공으로 판정하도록 다시 설계했습니다.
+          MyD 웹 프론트 3종의 배포는 공개 URL에서 받은 파일의 SHA-256이 빌드 산출물과 같을 때만 성공으로 판정하도록 다시 설계했습니다.
           HTTP 200은 캐시된 이전 화면에도 오기 때문에 기준으로 쓰지 않았습니다.
         </p>
         <div class="hero-actions">
@@ -59,7 +59,7 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
             <div class="timeline-content">
               <h3>tbn교통방송 앱 고도화 사업 · React Native 앱</h3>
               <p class="timeline-role">iOS·Android · 방송·로그인·업데이트 · 심사·출시</p>
-              <p class="timeline-description">방송·오디오, 편성, 교통 제보, 푸시, KMC 본인인증, Kakao·Apple 로그인을 다른 팀원과 함께 개발했습니다. iOS·Android 심사를 진행해 2026년 5월 양 플랫폼에 정식 출시했습니다. 출시 뒤에는 강제 업데이트를 넣고, 업데이트 정책을 못 받아 와도 앱을 막지 않게(fail-open) 설계했습니다.</p>
+              <p class="timeline-description">방송·오디오, 편성, 교통 제보, 푸시, KMC 본인인증, Kakao·Apple 로그인을 다른 팀원과 함께 개발했습니다(일부는 먼저 만들어진 기능을 이어받음). iOS·Android 심사를 진행해 2026년 5월 양 플랫폼에 정식 출시했습니다. 출시 뒤에는 강제 업데이트를 넣고, 업데이트 정책을 못 받아 와도 앱을 막지 않게(fail-open) 설계했습니다.</p>
               <p><a class="section-link" href="/about/#tbn">tbn교통방송 담당 업무 보기 <span aria-hidden="true">→</span></a></p>
             </div>
           </li>
@@ -94,7 +94,7 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
       <div class="shell">
         <div class="section-heading">
           <div><p class="mono-label">03 / Writing</p><h2 id="featured-writing">기술 글</h2></div>
-          <p>앱 초기화, 강제 업데이트, 웹 배포 검증을 다룹니다. 실제 작업을 공개용 예제로 다시 만들고 테스트 방법을 정리했습니다. 회사 코드는 포함하지 않습니다.</p>
+          <p>앱 초기화, 강제 업데이트, 웹 배포 검증을 다룹니다. 강제 업데이트와 웹 배포 검증은 실제 작업을 공개용 예제로 다시 만들었고, 앱 초기화는 설명용 예제입니다. 테스트 방법도 정리했고, 회사 코드는 포함하지 않습니다.</p>
         </div>
         <div class="post-list">
           {visiblePosts.map((post) => (
