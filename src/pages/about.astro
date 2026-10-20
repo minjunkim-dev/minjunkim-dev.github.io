@@ -57,7 +57,7 @@ import { SITE } from '../data/site';
               <ul class="timeline-description">
                 <li>iOS 26.4 업데이트 직후 발생한 스플래시 정지를 네트워크 확인 타이밍 문제로 특정하고, 긴급 심사 요청으로 제출 8시간 만에 패치를 배포했습니다.</li>
                 <li>홈에서 뒤로 가기 스와이프 후 화면과 터치가 멈추는 원인을 찾았습니다. SceneDelegate의 뒤로 가기 제스처 설정이 항상 허용을 반환하고 있었습니다. 돌아갈 화면이 있고 다른 화면 전환이 없을 때만 허용하고, Flutter 화면 전환 전후에 설정을 저장·복원했습니다. 허용 조건은 회귀 테스트로 고정했습니다.</li>
-                <li>2024년 Flutter 도입 후 중단된 iOS Jenkins CI/CD를 이어받아 Dev·Stag·Prod별로 다시 구축했습니다. TestFlight 업로드용 Fastlane lane 2개(내부 테스트용 internal, 출시 후보용 candidate)를 만들었습니다. TestFlight·Play 내부 트랙 업로드는 2026년 7월 GitHub Actions에 구성했고, 10월에 GitLab CI로 옮겼습니다. 이 구성으로 운영 출시한 기록은 없습니다. 같은 이름의 배포 인증서 2개 때문에 실패하던 release 서명은 인증서를 SHA-1 지문으로 지정해 해결했습니다.</li>
+                <li>2024년 Flutter 도입 후 중단된 iOS Jenkins CI/CD를 이어받아 개발·스테이징·운영 환경별로 다시 구축했습니다. Fastlane에는 내부 테스트용·출시 후보용 TestFlight 업로드 lane 2개를 만들었습니다. TestFlight·Play 내부 트랙 업로드는 2026년 7월 GitHub Actions에 구성했고, 10월에 GitLab CI로 옮겼습니다. 이 구성으로 운영 출시한 기록은 없습니다. 같은 이름의 배포 인증서 2개 때문에 release 서명이 실패했습니다. 인증서를 SHA-1 지문으로 지정해 해결했습니다.</li>
                 <li>데이터 거래 개편의 6개 핵심 화면과 서버 API 연동, 건강검진·금융 데이터 연동을 구현했습니다. 본인인증은 인증이 필요한 응답을 받으면 인증 화면으로 보내는 흐름과 MyD·금융 본인인증 분리를 맡았습니다. 2026년 5월 홈·온보딩 리뉴얼을 iOS·Android에 동시 출시했습니다.</li>
               </ul>
               <p class="timeline-description">기능 상태를 표현하던 Bool 4개(16가지 조합)를 상태·액션·효과를 나눈 enum 상태 머신으로 설계하고 iOS 기능 브랜치에 구현했습니다(운영 반영은 확인되지 않음). 설계안으로 iOS·Android의 상태 정의와 테스트 기준을 맞췄습니다.</p>
@@ -72,8 +72,9 @@ import { SITE } from '../data/site';
               <ul class="timeline-description">
                 <li>강제 업데이트의 시작 순서를 스플래시 → 정책 조회(timeout) → 권한 요청으로 고정했습니다. 정책은 Firebase Remote Config에서 받습니다. 정책 조회에 실패하면 차단하지 않고 진입을 허용합니다(fail-open). 정책 조회 장애가 전체 사용자 차단으로 번지지 않게 한 설계입니다. 게이트는 출시 뒤 추가해 iOS 2.1.1·Android 4.1.1부터 적용했습니다.</li>
                 <li>방송·오디오, 편성, 교통 제보, 푸시, KMC 본인인증, Kakao·Apple 로그인을 다른 팀원과 함께 개발하고(먼저 만들어진 기능을 이어받음), 2026년 5월 28일 양 플랫폼에 정식 출시했습니다.</li>
-                <li>동시 요청마다 따로 실행되던 토큰 갱신을 공유 refresh 큐로 묶고, 인증·푸시 토큰·동의 상태 동기화를 직렬화했습니다. 저장은 여러 값을 한 번에 쓰는 AsyncStorage.multiSet 한 번으로 바꿨습니다. 홈 이모티콘 SVG 16개를 PNG로 바꿔, 마운트하는 네이티브 뷰를 1,500여 개에서 16개로 줄였습니다(실측이 아니라 SVG가 도형마다 뷰 1개를 만드는 구조로 계산한 값).</li>
-                <li>원인 불명이던 Android CI 실패를 cgroup 메모리 측정으로 규명했습니다. 9GiB 한도에서 clang++ 22개가 동시에 실행되어 Gradle이 OOM으로 종료되었고, 컴파일 동시성을 제한해 PR 검사의 release 컴파일을 처음 통과시켰습니다.</li>
+                <li>동시 요청마다 따로 실행되던 토큰 갱신을 갱신 큐 하나로 묶고, 인증·푸시 토큰·동의 상태 저장을 차례로 실행하게 했습니다. 저장은 여러 값을 한 번에 쓰는 AsyncStorage.multiSet 한 번으로 바꿨습니다.</li>
+                <li>홈 이모티콘 SVG 16개를 PNG로 바꿔, 마운트하는 네이티브 뷰를 1,500여 개에서 16개로 줄였습니다. 이 수치는 실측이 아니라 SVG가 도형마다 뷰를 1개 만드는 구조로 계산한 값입니다.</li>
+            <li>원인 불명이던 Android CI 실패를 cgroup 메모리 측정으로 규명했습니다. 9GiB 한도에서 clang++ 22개가 동시에 실행되어 Gradle이 메모리 부족(OOM)으로 종료됐습니다. 컴파일 동시 실행 수를 제한해 PR 검사의 release 컴파일을 처음 통과시켰습니다.</li>
               </ul>
               <p><a class="section-link" href="https://apps.apple.com/kr/app/id969867489" target="_blank" rel="noopener noreferrer">tbn교통방송 App Store <span aria-hidden="true">↗</span></a></p>
             </div>
@@ -84,10 +85,10 @@ import { SITE } from '../data/site';
               <h3 id="mobile-id">장병체감형 원스톱 서비스 플랫폼 구축사업</h3>
               <p class="timeline-role">국방부 장병e음 앱 내 모바일 신분증 솔루션 · iOS 모듈 통합·기능 개발 · Android 기능 단위 보완</p>
               <ul class="timeline-description">
-                <li>Swift·SwiftUI 기반 iOS 앱에 모바일 신분증 모듈을 통합하고, DID·VC 발급 흐름(DID 생성·서명·발급·토큰 갱신)을 통합했습니다.</li>
-                <li>온라인 검증을 SSE에서 WebSocket으로 전환해 구현했습니다. 오프라인 검증에는 Groth16 proof와 QR 검증을 연계해 App Store 공개 앱에 반영했습니다.</li>
-                <li>QR이 30초마다 갱신될 때 진행 중 검증이 끊기는 원인을 WebSocket 단일 세션 구조에서 찾았습니다. Android에 있던 거래별 멀티 세션 구조를 iOS에 맞춰 넣고, 수신 timeout을 단계별(QR 대기 45초·proof 30초·검증 15초)로 나눴습니다.</li>
-                <li>앱 잠금·생체인증, 화면 캡처 방지, 무효화·재발급을 구현하고 보안 SDK 2종(보안 키패드 NFilter, 탈옥·디버거 탐지 ORA-X)을 통합했습니다. 다차수 취약점 점검(CWE)의 대응 코드를 반영했습니다.</li>
+                <li>Swift·SwiftUI 기반 iOS 앱에 모바일 신분증 모듈과 DID·VC 발급 흐름(DID 생성·서명·발급·토큰 갱신)을 통합했습니다.</li>
+                <li>온라인 검증을 SSE에서 WebSocket으로 전환해 구현했습니다. 오프라인 검증에는 영지식 증명(Groth16)과 QR 검증을 연계해 App Store 공개 앱에 반영했습니다.</li>
+                <li>QR이 30초마다 갱신될 때 진행 중 검증이 끊겼습니다. 원인은 WebSocket 연결을 하나만 쓰는 구조였습니다. 검증 요청마다 연결을 따로 여는 Android 구조를 iOS에 옮기고, 응답 대기 시간을 단계별로 나눴습니다(QR 45초·증명 30초·검증 15초).</li>
+                <li>앱 잠금·생체인증, 화면 캡처 방지, 무효화·재발급을 구현하고 보안 SDK 2종(보안 키패드 NFilter, 탈옥·디버거 탐지 ORA-X)을 통합했습니다. 여러 차례의 취약점 점검(CWE)에 맞춰 대응 코드를 반영했습니다.</li>
               </ul>
               <p class="timeline-description">담당 범위는 앱 내 모바일 신분증 솔루션입니다. Android 핵심 신분증 흐름은 다른 개발자와 공동 구현했습니다.</p>
               <p><a class="section-link" href="https://apps.apple.com/kr/app/id6744992032" target="_blank" rel="noopener noreferrer">장병e음 App Store <span aria-hidden="true">↗</span></a></p>
@@ -105,11 +106,11 @@ import { SITE } from '../data/site';
         </div>
         <div class="split-copy-body">
           <h3>B2B 데이터 SDK와 인증 서버 (2026.08 — 2026.09)</h3>
-          <p>B2B 고객사 앱에 넣는 공공기관 데이터 수집 SDK(iOS·Android, 출시 준비 단계)와 Node.js·PostgreSQL 인증 서버를 혼자 설계·구현했습니다. 고객사의 영구 API 비밀키를 앱에 넣지 않도록 짧은 수명 토큰과 서버가 서명한 정책을 SDK가 검증하는 구조를 만들었습니다. Android SDK 테스트의 0.63%(2,400세션 중 15건) 간헐 실패를 제품 코드의 실행 순서 경합(race)으로 규명했습니다. 같은 2,400세션 반복에서 0건이 되었습니다.</p>
+          <p>B2B 고객사 앱에 넣는 공공기관 데이터 수집 SDK(iOS·Android, 출시 준비 단계)와 Node.js·PostgreSQL 인증 서버를 혼자 설계·구현했습니다. 고객사의 영구 API 비밀키를 앱에 넣지 않도록 짧은 수명 토큰과 서버가 서명한 정책을 SDK가 검증하는 구조를 만들었습니다. Android SDK 테스트가 2,400세션 중 15건 간헐적으로 실패했습니다. 원인을 제품 코드의 실행 순서 경합(race)으로 규명했고, 같은 2,400세션 반복에서 실패가 0건이 되었습니다.</p>
           <h3>배포 자동화와 사내 인프라 (2026.07 — 2026.10)</h3>
-          <p>마이주식 Android 빌드는 Runner 교체와 캐시 적용으로 413초에서 174초가 됐습니다(유휴 상태의 이전 Runner와 캐시가 있는 새 Runner 비교). CI 서버 디스크 100% 장애를 정리하고 자동 정리기를 설치했습니다. 웹 프론트 배포는 공개 응답의 SHA-256이 산출물과 같을 때만 성공으로 판정하도록 재설계했습니다.</p>
+          <p>Runner를 새 서버로 옮긴 뒤 마이주식 Android 빌드는 413초에서 174초가 됐습니다. 유휴 상태의 이전 Runner와 캐시가 있는 새 Runner를 비교한 값입니다. CI 서버 디스크 100% 장애를 정리하고 자동 정리기를 설치했습니다. 웹 프론트 배포는 공개 응답의 SHA-256이 빌드 결과물과 같을 때만 성공으로 판정하도록 재설계했습니다.</p>
           <h3>마이주식 · 인턴 프로젝트 기술 지원 (2026.09 출시)</h3>
-          <p>Firebase Functions에서 Apple 연결 해제와 Google·Naver 토큰 흐름, 개인정보 보존을 맡고(카카오·네이버 연결 해제와 7일 유예는 인턴 구현) App Attest 기반 App Check를 연동했습니다. 인턴 2명의 프로젝트로, 앱 로직·UI는 인턴들이 맡고 저는 보조로 보안·배포·서버리스 백엔드를 지원했습니다. 1.1.0 업데이트 출시 당일, 아직 1.0.0을 쓰던 사용자의 회원가입이 실패한 원인(제가 넣은 새 필수 필드)을 찾아, 새 필드가 없는 1.0.0 요청을 따로 구분해 받아 복구했습니다.</p>
+          <p>Firebase Functions에서 Apple 연결 해제와 Google·Naver 토큰 흐름, 개인정보 보존을 맡고(카카오·네이버 연결 해제와 7일 유예는 인턴 구현) App Attest 기반 App Check를 연동했습니다. 인턴 2명의 프로젝트로, 앱 로직·UI는 인턴들이 맡고 저는 보조로 보안·배포·서버리스 백엔드를 지원했습니다. 1.1.0 업데이트 출시 당일, 아직 1.0.0을 쓰던 사용자의 회원가입이 실패했습니다. 원인은 제가 넣은 새 필수 필드였습니다. 새 필드가 없는 1.0.0 요청을 따로 구분해 받고, 별개 원인인 손상된 Apple 비밀키도 바로잡아 소셜 가입 방식 4종을 복구했습니다.</p>
           <h3>기술 조사·설계 (2024)</h3>
           <p>모바일 신분증 도입에 앞서 App Attest·DID·VC·ZKP를 조사하고 iOS Attestation 샘플을 구현·검증했습니다. ZKP만으로는 증명 입력이 발급 원본인지 보장되지 않는 점을 짚어, VC 필드의 Merkle Root를 발급자가 서명하고 검증자가 재계산한 뒤 proof를 검증하는 방안을 제안했습니다.</p>
         </div>
@@ -124,9 +125,9 @@ import { SITE } from '../data/site';
         </div>
         <div class="split-copy-body">
           <h3><a href="https://github.com/minjunkim-dev/mobile-runtime" target="_blank" rel="noopener noreferrer">Runstir</a> · 앱 개발 환경 준비·실행 도구 (alpha)</h3>
-          <p>앱 개발자가 환경 설정과 실행 준비에 쓰는 반복 작업을 줄이는 오픈소스 도구입니다(Swift 6.2, alpha). 처음 목표는 <code>git clone</code> 뒤 <code>mobile up</code>만으로 앱을 띄우는 것입니다. 1.0.0 범위는 Native·React Native·Flutter 앱을 iOS·Android에서 빌드·설치·실행하는 것입니다. 지금 alpha는 버전을 고정한 공개 React Native 앱으로 검증했습니다. Native 앱 실행 경로, Flutter SDK 준비, macOS GUI는 main에 병합했고, alpha 검증은 아직 하지 않았습니다. 다른 프로젝트의 Metro 서버를 재사용해 실패를 성공으로 보고하던 문제는, 실행 중인 Metro가 이 프로젝트 것인지 확인하게 해 고쳤습니다. 테스트 482개(alpha.4), ADR 40건.</p>
-          <h3><a href="https://github.com/minjunkim-dev/smallnext" target="_blank" rel="noopener noreferrer">smallnext</a> · LLM 기반 플래너 (SwiftUI + Rust API)</h3>
-          <p>LLM 호출을 생성기와 검사기로 나누고, 비용을 예약·정산 원장으로 통제합니다. 검사 지연의 대부분이 추론 토큰임을 측정으로 확인해 출력 범위를 줄였고, 전체 생성·검사 중앙값을 50.7초에서 42.1초로 줄였습니다(로컬 CLI, 순서를 바꿔 4쌍 측정, 품질 검사 47건 모두 통과).</p>
+          <p>앱 개발자가 환경 설정과 실행 준비에 쓰는 반복 작업을 줄이는 오픈소스 도구입니다(Swift 6.2, alpha). 처음 목표는 <code>git clone</code> 뒤 <code>mobile up</code>만으로 앱을 띄우는 것입니다. 1.0.0 범위는 Native·React Native·Flutter 앱을 iOS·Android에서 빌드·설치·실행하는 것입니다. 지금 alpha는 버전을 고정한 공개 React Native 앱으로 검증했습니다. Native 앱 실행 경로, Flutter SDK 준비, macOS GUI는 main에 병합했고, alpha 검증은 아직 하지 않았습니다. 다른 프로젝트의 Metro 서버를 재사용해 실패를 성공으로 보고하던 문제는, 실행 중인 Metro가 이 프로젝트 것인지 확인하게 해 고쳤습니다. alpha.4 기준 테스트 482개, 설계 결정 기록(ADR) 40건입니다.</p>
+          <h3><a href="https://github.com/minjunkim-dev/smallnext" target="_blank" rel="noopener noreferrer">smallnext</a> · LLM 기반 플래너 (SwiftUI + Rust API, 미출시)</h3>
+          <p>LLM 호출을 생성기와 검사기로 나누고, 비용을 예약·정산 원장으로 통제합니다. 검사 지연의 대부분이 추론 토큰임을 측정으로 확인하고 출력 범위를 줄였습니다. 생성·검사 전체 시간 중앙값은 50.7초에서 42.1초가 됐고, 품질 검사 47건은 모두 통과했습니다. 로컬 CLI에서 순서를 바꿔 4쌍으로 측정한 값입니다.</p>
           <h3><a href={`${SITE.repository}/tree/main/examples`} target="_blank" rel="noopener noreferrer">Tech Notes 예제 코드</a></h3>
           <p>기술 글에 실린 Swift·TypeScript 코드를 글마다 테스트 파일로 두고 CI에서 실행합니다. fail-open 강제 업데이트 판정, actor 기반 초기화 공유, ImageIO 다운샘플링, 배포 공개 응답 검증을 다룹니다.</p>
         </div>
