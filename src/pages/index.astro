@@ -18,9 +18,11 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
         <h1 id="hero-title">모바일 엔지니어<br /><span class="muted-heading">김민준입니다.</span></h1>
         <p class="hero-copy">
           Swift 기반 iOS 개발을 중심으로 React Native 앱까지 개발·출시·운영해 왔습니다.
-          MyD의 iOS 기능과 배포 환경을 맡고, tbn교통방송 앱을 iOS·Android에 정식 출시했으며,
-          장병e음 앱의 모바일 신분증 솔루션을 iOS 제품 코드에 통합했습니다.
-          성공 신호를 그대로 믿지 않고 확인합니다. 응답 코드, 빌드 통과, 도구의 '성공' 보고를 실제 결과로 다시 검증합니다.
+          MyD에서는 iOS 기능과 배포 환경을 맡았습니다.
+          tbn교통방송 앱은 iOS·Android에 정식 출시했습니다.
+          장병e음 앱에는 모바일 신분증 솔루션을 iOS 제품 코드에 통합했습니다.
+          성공 신호를 그대로 믿지 않고 확인합니다. 예를 들어 MyD 웹 프론트 3종의 배포는 공개 URL에서 받은 파일의 SHA-256이 빌드 산출물과 같을 때만 성공으로 판정하도록 다시 설계했습니다.
+          HTTP 200은 캐시된 이전 화면에도 오기 때문에 기준으로 쓰지 않았습니다.
         </p>
         <div class="hero-actions">
           <a class="button button-primary" href="#projects-title">주요 프로젝트 보기 <span aria-hidden="true">↓</span></a>
@@ -48,7 +50,7 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
             <div class="timeline-content">
               <h3>MyD · 개인 데이터 지갑</h3>
               <p class="timeline-role">iOS · 데이터·인증 연동 · 심사·배포 · 운영</p>
-              <p class="timeline-description">데이터 거래 6개 핵심 화면과 API 연동을 구현하고, KMC 본인인증·생활 데이터 연동을 맡았습니다. 중단된 iOS CI/CD를 재구축했고, iOS 26.4 업데이트 직후 발생한 스플래시 정지 현상을 긴급 심사로 패치했습니다.</p>
+              <p class="timeline-description">데이터 거래 6개 핵심 화면과 API 연동을 구현하고, KMC 본인인증과 건강검진·금융 데이터 연동을 맡았습니다. 중단된 iOS CI/CD를 재구축했고, iOS 26.4 업데이트 직후 발생한 스플래시 정지 현상을 긴급 심사로 패치했습니다.</p>
               <p><a class="section-link" href="/about/#myd">MyD 담당 업무 보기 <span aria-hidden="true">→</span></a></p>
             </div>
           </li>
@@ -57,7 +59,7 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
             <div class="timeline-content">
               <h3>tbn교통방송 앱 고도화 사업 · React Native 앱</h3>
               <p class="timeline-role">iOS·Android · 방송·로그인·업데이트 · 심사·출시</p>
-              <p class="timeline-description">방송·오디오·지역·푸시와 KMC·Kakao·Apple 인증 기능을 다른 팀원과 함께 개발했습니다. iOS·Android 심사를 진행해 2026년 5월 양 플랫폼에 정식 출시하고, 출시 뒤 fail-open 강제 업데이트 게이트를 추가했습니다.</p>
+              <p class="timeline-description">방송·오디오, 편성, 교통 제보, 푸시, KMC 본인인증, Kakao·Apple 로그인을 다른 팀원과 함께 개발했습니다(일부는 먼저 만들어진 기능을 이어받음). iOS·Android 심사를 진행해 2026년 5월 양 플랫폼에 정식 출시했습니다. 출시 뒤에는 강제 업데이트를 넣고, 업데이트 정책을 못 받아 와도 앱을 막지 않게(fail-open) 설계했습니다.</p>
               <p><a class="section-link" href="/about/#tbn">tbn교통방송 담당 업무 보기 <span aria-hidden="true">→</span></a></p>
             </div>
           </li>
@@ -66,7 +68,7 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
             <div class="timeline-content">
               <h3>장병체감형 원스톱 서비스 플랫폼 구축사업 · 장병e음 모바일 신분증</h3>
               <p class="timeline-role">iOS 모듈 통합 · Android 기능 보완</p>
-              <p class="timeline-description">iOS 앱에 신분증 모듈과 DID·VC 발급·서명 흐름을 통합하고, 앱 잠금·생체인증을 구현하고, 보안 SDK 통합과 취약점 점검 대응을 맡았습니다. 온라인 검증을 구현하고 오프라인 검증(QR)을 연계해 App Store 공개 앱에 반영했습니다. 담당 범위는 앱 내 모바일 신분증 솔루션이며, 일부 기능은 다른 개발자와 공동 구현했습니다.</p>
+              <p class="timeline-description">iOS 앱에 신분증 모듈과 DID·VC 발급·서명 흐름을 통합했습니다. DID는 분산 신원 식별자이고, VC는 발급자가 서명한 디지털 증명서입니다. 앱 잠금·생체인증을 구현하고, 보안 SDK 통합과 취약점 점검 대응을 맡았습니다. 온라인 검증을 구현하고 오프라인 검증(QR)을 연계해 App Store 공개 앱에 반영했습니다. 담당 범위는 앱 내 모바일 신분증 솔루션이며, 일부 기능은 다른 개발자와 공동 구현했습니다.</p>
               <p><a class="section-link" href="/about/#mobile-id">모바일 신분증 담당 업무 보기 <span aria-hidden="true">→</span></a></p>
             </div>
           </li>
@@ -82,7 +84,7 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
         </div>
         <div class="split-copy-body">
           <p>XCTest·Jest로 데이터 처리와 앱 동작을 검증합니다. 중단된 iOS 배포 파이프라인을 인수해 Dev·Stag·Prod별 Jenkins agent·job을 분리하고, Fastlane·Firebase App Distribution 배포를 연결했습니다.</p>
-          <p>마이주식(Flutter, 인턴 프로젝트)에서는 서브로 보안·배포·서버리스 백엔드를 지원하며 Firebase Functions에서 Apple 연결 해제와 Google·Naver 토큰 흐름을 맡고(인턴과 분담), App Attest 기반 App Check를 연동했습니다. Kotlin/Android 기능 보완, KMP 네이티브 연동, 신입 iOS 개발자 멘토링 경험도 있습니다.</p>
+          <p>마이주식은 인턴 2명이 앱 로직·UI를 맡은 Flutter 앱입니다. 저는 보조로 보안·배포·서버리스 백엔드를 지원했습니다. Firebase Functions에서는 인턴과 일을 나눠 Apple 연결 해제와 Google·Naver 토큰 흐름을 맡았습니다. App Attest 기반 App Check도 연동했습니다. Kotlin/Android 기능 보완, KMP 네이티브 연동, 신입 iOS 개발자 멘토링 경험도 있습니다.</p>
           <a class="section-link" href="/about/">전체 경력·기술·학력 보기 <span aria-hidden="true">→</span></a>
         </div>
       </div>
@@ -92,7 +94,7 @@ const visiblePosts = featuredPosts.length > 0 ? featuredPosts : posts.slice(0, 3
       <div class="shell">
         <div class="section-heading">
           <div><p class="mono-label">03 / Writing</p><h2 id="featured-writing">기술 글</h2></div>
-          <p>앱 초기화, 강제 업데이트, 웹 배포 검증을 다룹니다. 실제 작업을 공개용 예제로 다시 만들고 테스트 방법을 정리했습니다. 회사 코드는 포함하지 않습니다.</p>
+          <p>앱 초기화, 강제 업데이트, 웹 배포 검증을 다룹니다. 강제 업데이트와 웹 배포 검증은 실제 작업을 공개용 예제로 다시 만들었고, 앱 초기화는 설명용 예제입니다. 테스트 방법도 정리했고, 회사 코드는 포함하지 않습니다.</p>
         </div>
         <div class="post-list">
           {visiblePosts.map((post) => (
