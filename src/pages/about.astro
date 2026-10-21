@@ -68,9 +68,10 @@ import { SITE } from '../data/site';
             <div class="timeline-period">2025.09 — 2026.10</div>
             <div class="timeline-content">
               <h3 id="tbn">tbn교통방송 앱 고도화 사업 · React Native 앱</h3>
-              <p class="timeline-role">tbn교통방송 모바일 앱 · iOS·Android 기능 개발 · 심사·출시 · 출시 후 운영</p>
+              <p class="timeline-role">tbn교통방송 모바일 앱 · iOS·Android 기능 개발 · 발주처 소통 · 심사·출시 · 출시 후 운영</p>
               <ul class="timeline-description">
                 <li>강제 업데이트의 시작 순서를 스플래시 → 정책 조회(timeout) → 권한 요청으로 고정했습니다. 정책은 Firebase Remote Config에서 받습니다. 정책 조회에 실패하면 차단하지 않고 진입을 허용합니다(fail-open). 정책 조회 장애가 전체 사용자 차단으로 번지지 않게 한 설계입니다. 게이트는 출시 뒤 추가해 iOS 2.1.1·Android 4.1.1부터 적용했습니다.</li>
+                <li>발주처(도로교통공단) 실무자와 직접 소통했습니다. 요구사항을 듣고 반영했고, 조율이 필요한 요구는 조율했습니다. 요구사항 범위와 일정은 발주처와 협의해 정했습니다.</li>
                 <li>방송·오디오, 편성, 교통 제보, 푸시, KMC 본인인증, Kakao·Apple 로그인을 다른 팀원과 함께 개발하고(먼저 만들어진 기능을 이어받음), 2026년 5월 28일 양 플랫폼에 정식 출시했습니다.</li>
                 <li>동시 요청마다 따로 실행되던 토큰 갱신을 갱신 큐 하나로 묶고, 인증·푸시 토큰·동의 상태 저장을 차례로 실행하게 했습니다. 저장은 여러 값을 한 번에 쓰는 AsyncStorage.multiSet 한 번으로 바꿨습니다.</li>
                 <li>홈 이모티콘 SVG 16개를 PNG로 바꿔, 마운트하는 네이티브 뷰를 1,500여 개에서 16개로 줄였습니다. 이 수치는 실측이 아니라 SVG가 도형마다 뷰를 1개 만드는 구조로 계산한 값입니다.</li>
