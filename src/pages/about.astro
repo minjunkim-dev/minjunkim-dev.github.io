@@ -76,7 +76,7 @@ import { SITE } from '../data/site';
                 <li>방송·오디오, 편성, 교통 제보, 푸시, KMC 본인인증, Kakao·Apple 로그인을 다른 팀원과 함께 개발하고(먼저 만들어진 기능을 이어받음), 2026년 5월 28일 양 플랫폼에 정식 출시했습니다.</li>
                 <li>동시 요청마다 따로 실행되던 토큰 갱신을 갱신 큐 하나로 묶고, 인증·푸시 토큰·동의 상태 저장을 차례로 실행하게 했습니다. 저장은 여러 값을 한 번에 쓰는 AsyncStorage.multiSet 한 번으로 바꿨습니다.</li>
                 <li>홈 이모티콘 SVG 16개를 PNG로 바꿔, 마운트하는 네이티브 뷰를 1,500여 개에서 16개로 줄였습니다. 이 수치는 실측이 아니라 SVG가 도형마다 뷰를 1개 만드는 구조로 계산한 값입니다.</li>
-            <li>원인 불명이던 Android CI 실패를 cgroup 메모리 측정으로 규명했습니다. 9GiB 한도에서 clang++ 22개가 동시에 실행되어 Gradle이 메모리 부족(OOM)으로 종료됐습니다. 컴파일 동시 실행 수를 제한해 PR 검사의 release 컴파일을 처음 통과시켰습니다.</li>
+            <li>원인 불명이던 Android CI 실패는 AI 코딩 에이전트가 cgroup 메모리를 측정해 원인을 찾았습니다. 9GiB 한도에서 clang++ 22개가 동시에 실행되어 Gradle이 메모리 부족(OOM)으로 종료됐습니다. 컴파일 동시 실행 수를 제한해 PR 검사의 release 컴파일을 처음 통과시켰습니다.</li>
               </ul>
               <p><a class="section-link" href="https://apps.apple.com/kr/app/id969867489" target="_blank" rel="noopener noreferrer">tbn교통방송 App Store <span aria-hidden="true">↗</span></a></p>
             </div>
