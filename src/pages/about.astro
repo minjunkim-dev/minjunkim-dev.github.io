@@ -85,14 +85,14 @@ import { SITE } from '../data/site';
             <div class="timeline-period">2024.11 — 2025.11</div>
             <div class="timeline-content">
               <h3 id="mobile-id">장병체감형 원스톱 서비스 플랫폼 구축사업</h3>
-              <p class="timeline-role">국방부 장병e음 앱 내 모바일 신분증 솔루션 · iOS 모듈 통합·기능 개발 · Android 기능 단위 보완</p>
+              <p class="timeline-role">국방부 장병e음 앱 내 모바일 신분증 솔루션 · iOS 모듈 개발·통합 · Android 기능 단위 보완</p>
               <ul class="timeline-description">
-                <li>Swift·SwiftUI 기반 iOS 앱에 모바일 신분증 모듈과 DID·VC 발급 흐름(DID 생성·서명·발급·토큰 갱신)을 통합했습니다.</li>
-                <li>온라인 검증을 SSE에서 WebSocket으로 전환해 구현했습니다. 오프라인 검증에는 영지식 증명(Groth16)과 QR 검증을 연계해 App Store 공개 앱에 반영했습니다.</li>
+                <li>회사 모바일 신분증 솔루션의 iOS 코드(DID 생성·서명·발급·토큰 갱신, 오프라인 검증)를 직접 만들고, Swift·SwiftUI 기반 장병e음 앱에 통합했습니다.</li>
+                <li>온라인 검증을 SSE에서 WebSocket으로 전환해 구현했습니다. 오프라인 검증은 영지식 증명(Groth16) proof를 QR로 만들어 30초 안에만 유효하게 구현했고, App Store 공개 앱에 반영했습니다. 암호 라이브러리는 외부 것을 썼습니다.</li>
                 <li>QR이 30초마다 갱신될 때 진행 중 검증이 끊겼습니다. 원인은 WebSocket 연결을 하나만 쓰는 구조였습니다. 검증 요청마다 연결을 따로 여는 Android 구조를 iOS에 옮기고, 응답 대기 시간을 단계별로 나눴습니다(QR 45초·증명 30초·검증 15초).</li>
                 <li>앱 잠금·생체인증, 화면 캡처 방지, 무효화·재발급을 구현하고 보안 SDK 2종(보안 키패드 NFilter, 탈옥·디버거 탐지 ORA-X)을 통합했습니다. 여러 차례의 취약점 점검(CWE)에 맞춰 대응 코드를 반영했습니다.</li>
               </ul>
-              <p class="timeline-description">담당 범위는 앱 내 모바일 신분증 솔루션입니다. Android 핵심 신분증 흐름은 다른 개발자와 공동 구현했습니다.</p>
+              <p class="timeline-description">담당 범위는 앱 내 모바일 신분증 솔루션입니다. Android 핵심 신분증 흐름은 다른 개발자가 만들었고, 저는 기능 단위로 보완했습니다.</p>
               <p><a class="section-link" href="https://apps.apple.com/kr/app/id6744992032" target="_blank" rel="noopener noreferrer">장병e음 App Store <span aria-hidden="true">↗</span></a></p>
             </div>
           </li>
