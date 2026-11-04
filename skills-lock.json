@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "editorial-portfolio-chapters": {
+      "source": "MengTo/Skills",
+      "sourceType": "github",
+      "skillPath": "agent-skills/web-design/editorial-portfolio-chapters/SKILL.md",
+      "computedHash": "10420cc63dcb8a996c8b111339570e038f6c46e848347dacdd1eeeb1c56450bb"
+    },
+    "editorial-tech": {
+      "source": "MengTo/Skills",
+      "sourceType": "github",
+      "skillPath": "agent-skills/web-design/editorial-tech/SKILL.md",
+      "computedHash": "991e3631aacc0034a20f8e32da93cd1fa49b0b0e2474ab90493ca5cdd48ca2e7"
+    }
+  }
+}
