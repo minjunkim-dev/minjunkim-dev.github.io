@@ -1,6 +1,6 @@
 ---
 title: "계산상 653MB가 되는 공지 이미지: ImageIO로 표시 크기만 디코딩하기"
-description: "9432×17328px 이미지를 원본 크기로 디코딩하면 계산상 약 653MB가 되던 문제를, ImageIO로 표시 크기만큼만 디코딩해 해결한 기록. fit/fill 크기 계산, 캐시 키, 동시 디코딩 수와 메모리 확인 항목을 정리한다."
+description: "9432×17328px 이미지를 원본 크기로 디코딩하면 계산상 약 653MB가 되던 문제를, ImageIO로 표시 크기만큼만 디코딩하도록 고친 기록. fit/fill 크기 계산, 캐시 키, 동시 디코딩 수와 메모리 확인 항목을 정리한다."
 publishedAt: 2026-07-09
 updatedAt: 2026-10-18
 tags:
@@ -29,14 +29,14 @@ import decoderTests from '../../../examples/imageio-downsampling-memory-stabilit
 
 2026년 4월, MyD iOS 앱의 공지 팝업에 가로 9432px, 세로 17328px 이미지가 올라왔다. 기존 코드는 이 이미지를 원본 크기로 디코딩했다. 원본 크기의 비트맵 하나는 계산상 약 653MB(9432 × 17328 × 4바이트)이고, 앱은 메모리 한도를 넘어 강제 종료(SIGKILL)됐다.
 
-수정은 화면에 필요한 크기만큼만 디코딩하는 것이었다. ImageIO 썸네일 API로 다운샘플러를 만들고, 원본 캐시를 끄고, 긴 변을 화면 너비 × 배율 픽셀로 제한했다. 정상·nil·손상 데이터 등 6개 테스트로 고정했다. 수정 뒤 메모리는 다시 재지 않았다. 아래 표의 수정 후 값은 계산값이다.
+화면에 필요한 크기만큼만 디코딩하도록 직접 고쳤다. ImageIO 썸네일 API로 다운샘플러를 만들고, 원본 캐시를 끄고, 긴 변을 화면 너비 × 배율 픽셀로 제한했다. 정상·nil·손상 데이터 등 6개 테스트로 고정했다. 수정 뒤 메모리는 다시 재지 않았다. 아래 표의 수정 후 값은 계산값이다.
 
 | 디코딩 대상 | 픽셀 | 비트맵 메모리(4바이트/픽셀) |
 |---|---|---|
 | 원본 | 9432 × 17328 | 약 653MB |
 | 긴 변을 1179px(393pt × 3배율)로 제한 | 642 × 1179 | 약 3MB(계산값) |
 
-이 글의 코드는 그 수정을 공개 API로 다시 만든 예제다. 실서비스 코드를 그대로 옮기지 않았다. 코드와 테스트는 [examples/imageio-downsampling-memory-stability](https://github.com/minjunkim-dev/minjunkim-dev.github.io/tree/main/examples/imageio-downsampling-memory-stability)에 있고, CI가 iOS Simulator에서 실행한다. 다운샘플링 함수와 메모리를 확인할 테스트 항목을 정리한다.
+이 글의 코드는 그 수정을 공개 API로 다시 만든 예제다. 실서비스 코드를 그대로 옮기지 않았다. 코드와 테스트는 [examples/imageio-downsampling-memory-stability](https://github.com/minjunkim-dev/minjunkim-dev.github.io/tree/main/examples/imageio-downsampling-memory-stability)에 있고, CI가 iOS Simulator에서 실행한다.
 
 ## 파일 크기와 디코딩 크기를 분리해서 생각하기
 
@@ -87,7 +87,7 @@ UIKit의 레이아웃은 point 단위이고 ImageIO의 `kCGImageSourceThumbnailM
 
 ## 리스트에서는 동시 디코딩 수도 제한하기
 
-한 장의 크기를 줄여도 여러 셀이 동시에 디코딩하면 순간 메모리 사용량이 커진다. 그래서 동시에 디코딩하는 수에도 상한을 둔다.
+한 장의 크기를 줄여도 여러 셀이 동시에 디코딩하면 순간 메모리 사용량이 커진다.
 
 <Snippet code={limiter} lang="swift" region="limiter" />
 

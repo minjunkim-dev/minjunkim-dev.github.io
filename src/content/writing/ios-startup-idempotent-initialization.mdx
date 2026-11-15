@@ -1,6 +1,6 @@
 ---
 title: "iOS 초기화 중복 호출 줄이기: actor에서 실행 중인 Task 공유하기"
-description: "AppDelegate, Scene, 딥링크가 같은 초기화를 요청할 때 Task와 완료 결과를 공유하는 예제. 실패 후 재시도와 취소 정책도 살펴본다."
+description: "AppDelegate, Scene, 딥링크가 같은 초기화를 요청할 때 Task와 완료 결과를 공유하는 예제. 실패 후 재시도와 취소 정책도 정한다."
 publishedAt: 2026-07-13
 updatedAt: 2026-10-18
 tags:
@@ -27,7 +27,7 @@ import articleTests from '../../../examples/ios-startup-idempotent-initializatio
 
 실제 앱에는 진입점이 여럿이다. `AppDelegate`가 기본 초기화를 하는 동안 Scene이 연결될 수 있다. 푸시 알림이나 딥링크가 먼저 와서 인증 상태를 확인하려 할 수도 있다. 백그라운드 작업이나 복구 코드가 같은 의존성을 요청할 수도 있다. 각각이 `initialize()`를 호출하면 작업이 중복되고, 호출자마다 서로 다른 부분 상태를 보게 된다.
 
-이 글의 코드는 초기화 중복 호출을 설명하려고 공개용으로 다시 만든 예제다. 실서비스 코드나 성능 측정 결과가 아니다. 실행 중인 Task와 완료 결과를 여러 진입점에서 공유하는 방법을 다룬다.
+이 글의 코드는 초기화 중복 호출을 설명하려고 만든 공개 예제다. 실서비스 코드를 옮긴 것도, 성능을 측정한 결과도 아니다.
 
 ## 초기화가 겹칠 때 생길 수 있는 문제
 
@@ -61,7 +61,7 @@ final class AppBootstrapper {
 
 ## 상태를 `idle`, `running`, `ready`로 나누기
 
-초기화 상태는 Boolean 하나로는 부족하다. 세 상태로 나눈다.
+Boolean 하나로는 "누군가 이미 시작했다"를 나타낼 수 없다.
 
 - `idle`: 아직 시작하지 않았거나, 재시도 가능한 실패 뒤에 돌아온 상태
 - `running(Task)`: 누군가 시작했고 다른 호출자가 기다려야 하는 상태
