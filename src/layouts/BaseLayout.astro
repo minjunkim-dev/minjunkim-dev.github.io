@@ -1,4 +1,5 @@
 ---
+import PostHog from '../components/PostHog.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import { SITE } from '../data/site';
@@ -94,6 +95,7 @@ const structuredData = type === 'article'
 
     <title>{documentTitle}</title>
     <script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)} />
+    <PostHog />
   </head>
   <body>
     <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
