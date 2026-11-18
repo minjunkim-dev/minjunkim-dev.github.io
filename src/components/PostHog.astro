@@ -18,14 +18,20 @@ const host = import.meta.env.PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
       capture_heatmaps: false,
       capture_exceptions: false,
       capture_performance: false,
+      // Ad click IDs (gclid, fbclid, ...) are personal data; the SDK masks them.
+      mask_personal_data_properties: true,
       // A visitor's link can carry personal data in the query or fragment; send only origin + path.
+      // $set_once holds the same URLs as $initial_* person properties.
       before_send: function (event) {
         var props = (event && event.properties) || {};
-        ['$current_url', '$referrer', '$initial_current_url', '$initial_referrer', '$session_entry_url', '$session_entry_referrer'].forEach(function (name) {
-          try {
-            var url = new URL(props[name]);
-            props[name] = url.origin + url.pathname;
-          } catch (e) {}
+        [props, event && event.$set_once, event && event.$set, props.$set_once, props.$set].forEach(function (bag) {
+          if (!bag) return;
+          ['$current_url', '$referrer', '$initial_current_url', '$initial_referrer', '$session_entry_url', '$session_entry_referrer'].forEach(function (name) {
+            try {
+              var url = new URL(bag[name]);
+              bag[name] = url.origin + url.pathname;
+            } catch (e) {}
+          });
         });
         return event;
       },
