@@ -1,6 +1,8 @@
 // Runs `npm audit` and fails on any moderate-or-higher advisory, except the
 // advisories listed in ALLOW until their expiry date. An expired entry fails CI.
 import { execFileSync } from "node:child_process";
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 // advisory id -> last day (UTC) it is allowed, and why.
 const ALLOW = {
@@ -13,8 +15,13 @@ const LEVELS = new Set(["moderate", "high", "critical"]);
 
 export function check(report, today) {
   if (report.error) return { failed: [`npm audit error: ${JSON.stringify(report.error)}`], allowed: [] };
+  const vulns = report.vulnerabilities;
+  // An unknown report shape must fail, not pass with zero findings.
+  if (!vulns || typeof vulns !== "object" || Array.isArray(vulns)) {
+    return { failed: ["npm audit output has no vulnerabilities object"], allowed: [] };
+  }
   const seen = new Map();
-  for (const vuln of Object.values(report.vulnerabilities ?? {})) {
+  for (const vuln of Object.values(vulns)) {
     for (const via of vuln.via ?? []) {
       if (typeof via !== "object" || !LEVELS.has(via.severity)) continue;
       const id = String(via.url ?? "").split("/").pop() || String(via.source);
@@ -32,7 +39,8 @@ export function check(report, today) {
   return { failed, allowed };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Compare real paths: a URL-encoded or symlinked path must not skip the audit.
+if (process.argv[1] && fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
   let out;
   try {
     out = execFileSync("npm", ["audit", "--include=dev", "--json"], { encoding: "utf8", maxBuffer: 64 << 20 });

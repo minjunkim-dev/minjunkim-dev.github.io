@@ -27,3 +27,9 @@ test("low advisories are ignored", () => {
 test("npm audit error fails", () => {
   assert.equal(check({ error: { code: "ENOTFOUND" } }, "2026-11-18").failed.length, 1);
 });
+
+test("output without a vulnerabilities object fails", () => {
+  for (const r of [{}, { auditReportVersion: 2 }, { vulnerabilities: [] }, { vulnerabilities: null }]) {
+    assert.equal(check(r, "2026-11-18").failed.length, 1);
+  }
+});
