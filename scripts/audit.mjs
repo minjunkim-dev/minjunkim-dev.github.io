@@ -4,13 +4,13 @@ import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-// advisory id -> last day (UTC) it is allowed, and why.
-const ALLOW = {
-  "GHSA-fc5q-39xc-vjpf": {
+// advisory URL -> last day (UTC) it is allowed, and why. Only an exact URL match is allowed.
+const ALLOW = new Map([
+  ["https://github.com/advisories/GHSA-fc5q-39xc-vjpf", {
     until: "2026-12-18",
     why: "picomatch ReDoS. Every published version is affected and no fix exists. picomatch runs only at build time, with globs from this repository.",
-  },
-};
+  }],
+]);
 const LEVELS = new Set(["moderate", "high", "critical"]);
 
 export function check(report, today) {
@@ -21,26 +21,31 @@ export function check(report, today) {
     return { failed: ["npm audit output has no vulnerabilities object"], allowed: [] };
   }
   const seen = new Map();
-  for (const vuln of Object.values(vulns)) {
-    for (const via of vuln.via ?? []) {
+  const failed = [];
+  for (const [name, vuln] of Object.entries(vulns)) {
+    if (!Array.isArray(vuln?.via)) {
+      failed.push(`npm audit output: ${name} has no via list`);
+      continue;
+    }
+    for (const via of vuln.via) {
       if (typeof via !== "object" || !LEVELS.has(via.severity)) continue;
-      const id = String(via.url ?? "").split("/").pop() || String(via.source);
-      seen.set(id, `${id} ${via.severity} ${via.name}: ${via.title}`);
+      const key = String(via.url ?? via.source);
+      seen.set(key, `${key} ${via.severity} ${via.name}: ${via.title}`);
     }
   }
-  const failed = [];
   const allowed = [];
-  for (const [id, line] of seen) {
-    const entry = ALLOW[id];
+  for (const [key, line] of seen) {
+    const entry = ALLOW.get(key);
     if (!entry) failed.push(line);
-    else if (today > entry.until) failed.push(`${line} (allowance expired ${entry.until})`);
-    else allowed.push(`${line} (allowed until ${entry.until})`);
+    else if (today <= entry.until) allowed.push(`${line} (allowed until ${entry.until})`);
   }
+  // An expired entry fails even when npm no longer reports it, so it gets removed.
+  for (const [key, entry] of ALLOW) if (today > entry.until) failed.push(`${key} allowance expired ${entry.until}`);
   return { failed, allowed };
 }
 
 // Compare real paths: a URL-encoded or symlinked path must not skip the audit.
-if (process.argv[1] && fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
+if (process.argv[1] && realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1])) {
   let out;
   try {
     out = execFileSync("npm", ["audit", "--include=dev", "--json"], { encoding: "utf8", maxBuffer: 64 << 20 });
