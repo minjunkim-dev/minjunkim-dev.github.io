@@ -26,7 +26,8 @@ jobs:
           cache: npm
       - run: npm install --global npm@11.19.0 --ignore-scripts
       - run: npm ci --ignore-scripts --include=dev
-      - run: npm audit --include=dev --audit-level=moderate
+      - run: node --test scripts/audit.test.mjs
+      - run: node scripts/audit.mjs
       # astro check, article structure checks, and node --test for src/ and examples/
       - run: npm run check
       - run: npx astro build
