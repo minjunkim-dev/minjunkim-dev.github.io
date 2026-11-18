@@ -50,7 +50,8 @@ if (process.argv[1] && realpathSync(fileURLToPath(import.meta.url)) === realpath
   try {
     out = execFileSync("npm", ["audit", "--include=dev", "--json"], { encoding: "utf8", maxBuffer: 64 << 20 });
   } catch (e) {
-    out = e.stdout; // npm audit exits 1 when it finds anything
+    if (e.signal || e.status !== 1) throw e; // npm audit exits 1 when it finds anything; anything else is an error
+    out = e.stdout;
   }
   const { failed, allowed } = check(JSON.parse(out), new Date().toISOString().slice(0, 10));
   for (const line of allowed) console.log(`::warning::${line}`);
