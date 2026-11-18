@@ -23,8 +23,8 @@ export function check(report, today) {
   const seen = new Map();
   const failed = [];
   for (const [name, vuln] of Object.entries(vulns)) {
-    if (!Array.isArray(vuln?.via)) {
-      failed.push(`npm audit output: ${name} has no via list`);
+    if (!Array.isArray(vuln?.via) || vuln.via.length === 0) {
+      failed.push(`npm audit output: ${name} has no via entries`);
       continue;
     }
     for (const via of vuln.via) {

@@ -36,6 +36,7 @@ test("output without a vulnerabilities object fails", () => {
 
 test("a record without a via list fails", () => {
   assert.equal(check({ vulnerabilities: { pkg: { severity: "high" } } }, "2026-11-18").failed.length, 1);
+  assert.equal(check({ vulnerabilities: { pkg: { severity: "high", via: [] } } }, "2026-11-18").failed.length, 1);
 });
 
 test("only the exact advisory URL is allowed", () => {
