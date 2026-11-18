@@ -35,7 +35,7 @@ jobs:
         run: npm ci --ignore-scripts --include=dev
 
       - name: Audit dependencies
-        run: npm audit --include=dev --audit-level=moderate
+        run: node scripts/audit.mjs
 
       - name: Type-check Astro
         run: npm run check
